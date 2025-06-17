@@ -1,3 +1,4 @@
+// components/RecipeCard.kt
 package com.example.culinarycompanion.components
 
 import androidx.compose.foundation.clickable
@@ -12,13 +13,13 @@ import com.example.culinarycompanion.model.Recipe
 fun RecipeCard(
     recipe: Recipe,
     modifier: Modifier = Modifier,
-    onClick: () -> Unit = {}
+    onClick: () -> Unit = {}  // Add this parameter for click handling
 ) {
     Card(
         modifier = modifier
             .padding(8.dp)
             .fillMaxWidth()
-            .clickable(onClick = onClick),
+            .clickable(onClick = onClick),  // Make the entire card clickable
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
         )
@@ -39,19 +40,30 @@ fun RecipeCard(
                 Text(
                     text = "⏱️ ${recipe.prepTime} min prep",
                     style = MaterialTheme.typography.labelMedium,
-                    modifier = Modifier.weight(1f)
-                )
+                    modifier = Modifier.weight(1f))
                 Text(
-                    text = "🍳 ${recipe.cookTime} min cook",
+                            text = "🍳 ${recipe.cookTime} min cook",
                     style = MaterialTheme.typography.labelMedium,
-                    modifier = Modifier.weight(1f)
-                )
+                    modifier = Modifier.weight(1f))
             }
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = "🍽️ Serves ${recipe.servings}",
-                style = MaterialTheme.typography.labelMedium
-            )
+                style = MaterialTheme.typography.labelMedium)
+
+            // Add dietary tags if available
+            if (recipe.dietaryTags.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Row {
+                    recipe.dietaryTags.forEach { tag ->
+                        Text(
+                            text = "#$tag",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(end = 8.dp))
+                    }
+                }
+            }
         }
     }
 }

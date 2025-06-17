@@ -35,7 +35,7 @@ object DataSource {
             servings = 4,
             category = RecipeCategory.BREAKFAST.name,
             dietaryTags = listOf("Vegetarian"),
-            imageUrl = "https://example.com/images/pancakes.jpg"
+            imageUrl = "https://images.immediate.co.uk/production/volatile/sites/30/2024/06/FluffyJapanesePancakes-e6d7773.jpg?quality=90&webp=true&resize=375,341"
         ),
         Recipe(
             id = 2,
@@ -63,7 +63,7 @@ object DataSource {
             servings = 2,
             category = RecipeCategory.DINNER.name,
             dietaryTags = listOf("Vegan", "Gluten-Free"),
-            imageUrl = "https://example.com/images/stirfry.jpg"
+            imageUrl = "https://i2.wp.com/lifemadesimplebakes.com/wp-content/uploads/2021/04/vegetable-stir-fry-resize-15.jpg"
         ),
         Recipe(
             id = 3,
@@ -95,7 +95,7 @@ object DataSource {
             servings = 8,
             category = RecipeCategory.DESSERTS.name,
             dietaryTags = listOf("Vegetarian"),
-            imageUrl = "https://example.com/images/chocolate-cake.jpg"
+            imageUrl = "https://www.giverecipe.com/wp-content/uploads/2020/06/Chocolate-Strawberry-Cake-Recipe.jpg"
         )
     )
 

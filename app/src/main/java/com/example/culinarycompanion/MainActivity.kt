@@ -205,19 +205,3 @@ fun DietaryFilterRow(
         Spacer(modifier = Modifier.width(8.dp))
     }
 }
-
-// Update RecipeCard to handle clicks
-@Composable
-fun RecipeCard(
-    recipe: Recipe,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit // Add onClick parameter
-) {
-    Card(
-        modifier = modifier
-            .clickable(onClick = onClick) // Make card clickable
-        // ... rest of existing code ...
-    ) {
-        // ... existing content ...
-    }
-}
