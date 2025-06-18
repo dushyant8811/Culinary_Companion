@@ -2,15 +2,20 @@
 package com.example.culinarycompanion.components
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -18,10 +23,19 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.culinarycompanion.model.Recipe
+import com.example.culinarycompanion.model.RecipeCollection
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RecipeDetailScreen(recipe: Recipe, navController: NavController) {
+fun RecipeDetailScreen(
+    recipe: Recipe,
+    navController: NavController,
+    collections: List<RecipeCollection>,  // Added collections parameter
+    onFavoriteToggle: (Boolean) -> Unit = {},
+    onAddToCollection: (Long) -> Unit = {}
+) {
+    var showCollectionsDialog by remember { mutableStateOf(false) }
+
     Scaffold(
         topBar = {
             SmallTopAppBar(
@@ -30,7 +44,23 @@ fun RecipeDetailScreen(recipe: Recipe, navController: NavController) {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                     }
+                },
+                actions = {
+                    IconButton(onClick = { onFavoriteToggle(!recipe.isFavorite) }) {
+                        Icon(
+                            imageVector = if (recipe.isFavorite) Icons.Filled.Favorite else Icons.Outlined.Favorite,
+                            contentDescription = "Favorite",
+                            tint = if (recipe.isFavorite) Color.Red else MaterialTheme.colorScheme.onSurface
+                        )
+                    }
                 }
+            )
+        },
+        floatingActionButton = {
+            ExtendedFloatingActionButton(
+                onClick = { showCollectionsDialog = true },
+                icon = { Icon(Icons.Default.Folder, contentDescription = "Add to Collection") },
+                text = { Text("Add to Collection") }
             )
         }
     ) { innerPadding ->
@@ -95,6 +125,63 @@ fun RecipeDetailScreen(recipe: Recipe, navController: NavController) {
                     )
                 }
             }
+        }
+
+        // Collections Dialog
+        if (showCollectionsDialog) {
+            AlertDialog(
+                onDismissRequest = { showCollectionsDialog = false },
+                title = { Text("Add to Collection") },
+                text = {
+                    LazyColumn {
+                        if (collections.isEmpty()) {
+                            item {
+                                Text("No collections yet. Create one first.")
+                            }
+                        } else {
+                            items(collections) { collection ->
+                                val containsRecipe = recipe.id in collection.recipeIds
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            if (!containsRecipe) {
+                                                onAddToCollection(collection.id)
+                                            }
+                                            showCollectionsDialog = false
+                                        }
+                                        .padding(16.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = if (containsRecipe) Icons.Default.Check else Icons.Default.Folder,
+                                        contentDescription = "Collection",
+                                        tint = if (containsRecipe) Color.Green else MaterialTheme.colorScheme.primary
+                                    )
+                                    Spacer(modifier = Modifier.width(16.dp))
+                                    Text(
+                                        text = collection.name,
+                                        style = MaterialTheme.typography.bodyLarge
+                                    )
+                                }
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    Button(onClick = {
+                        navController.navigate("collections")
+                        showCollectionsDialog = false
+                    }) {
+                        Text("Manage Collections")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showCollectionsDialog = false }) {
+                        Text("Cancel")
+                    }
+                }
+            )
         }
     }
 }

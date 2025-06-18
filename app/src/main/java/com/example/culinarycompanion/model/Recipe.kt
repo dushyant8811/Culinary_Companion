@@ -15,6 +15,7 @@ data class Recipe(
     val category: String = RecipeCategory.ALL.name, // Default category
     val dietaryTags: List<String> = emptyList(), // For filters
     val imageUrl: String? = null, // Add image URL field
+    var isFavorite: Boolean = false
 ) {
     // Helper function to get category display name
     fun getCategoryDisplayName(): String {
