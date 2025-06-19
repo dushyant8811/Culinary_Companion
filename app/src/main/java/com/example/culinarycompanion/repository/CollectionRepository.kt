@@ -1,11 +1,16 @@
 package com.example.culinarycompanion.repository
 
 import com.example.culinarycompanion.database.CollectionDao
+import com.example.culinarycompanion.database.SavedRecipe
+import com.example.culinarycompanion.database.SavedRecipeDao
+import com.example.culinarycompanion.model.Recipe
 import com.example.culinarycompanion.model.RecipeCollection
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class CollectionRepository(private val collectionDao: CollectionDao) {
+class CollectionRepository(private val collectionDao: CollectionDao,
+                           private val savedRecipeDao: SavedRecipeDao
+) {
 
     suspend fun getAllCollections(): List<RecipeCollection> {
         return withContext(Dispatchers.IO) {
@@ -51,4 +56,53 @@ class CollectionRepository(private val collectionDao: CollectionDao) {
             collectionDao.getCollectionsContainingRecipe(recipeId)
         }
     }
+
+    // Add these new functions
+    suspend fun saveRecipeLocally(recipe: Recipe) {
+        withContext(Dispatchers.IO) {
+            val savedRecipe = SavedRecipe(
+                id = recipe.id,
+                title = recipe.title,
+                ingredients = recipe.ingredients,
+                instructions = recipe.instructions,
+                prepTime = recipe.prepTime,
+                cookTime = recipe.cookTime,
+                servings = recipe.servings,
+                category = recipe.category,
+                dietaryTags = recipe.dietaryTags,
+                imageUrl = recipe.imageUrl,
+                isFavorite = true
+            )
+            savedRecipeDao.insert(savedRecipe)
+        }
+    }
+
+    suspend fun deleteLocalRecipe(recipeId: Int) {
+        withContext(Dispatchers.IO) {
+            savedRecipeDao.deleteById(recipeId)
+        }
+    }
+
+    suspend fun getLocalRecipes(): List<Recipe> {
+        return withContext(Dispatchers.IO) {
+            savedRecipeDao.getAllSavedRecipes().map { it.toRecipe() }
+        }
+    }
+}
+
+// Add this extension function
+fun SavedRecipe.toRecipe(): Recipe {
+    return Recipe(
+        id = id,
+        title = title,
+        ingredients = ingredients,
+        instructions = instructions,
+        prepTime = prepTime,
+        cookTime = cookTime,
+        servings = servings,
+        category = category,
+        dietaryTags = dietaryTags,
+        imageUrl = imageUrl,
+        isFavorite = isFavorite
+    )
 }

@@ -9,15 +9,15 @@ import androidx.room.TypeConverters
 import com.example.culinarycompanion.model.RecipeCollection
 
 @Database(
-    entities = [RecipeCollection::class],
-    version = 1,
+    entities = [RecipeCollection::class, SavedRecipe::class],
+    version = 2, // Incremented version
     exportSchema = false
 )
 
-@TypeConverters(Converters::class) // Add this
-
+@TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun collectionDao(): CollectionDao
+    abstract fun savedRecipeDao(): SavedRecipeDao
 
     companion object {
         @Volatile

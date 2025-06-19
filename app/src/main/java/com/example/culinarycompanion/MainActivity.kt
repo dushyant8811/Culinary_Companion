@@ -1,10 +1,11 @@
 package com.example.culinarycompanion
 
+import PreferencesManager
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -16,7 +17,6 @@ import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -26,7 +26,6 @@ import androidx.navigation.compose.rememberNavController
 import com.example.culinarycompanion.components.*
 import com.example.culinarycompanion.data.DataSource
 import com.example.culinarycompanion.database.AppDatabase
-import com.example.culinarycompanion.database.CollectionDao
 import com.example.culinarycompanion.model.Recipe
 import com.example.culinarycompanion.model.RecipeCategory
 import com.example.culinarycompanion.model.RecipeCollection
@@ -35,147 +34,221 @@ import com.example.culinarycompanion.screens.*
 import com.example.culinarycompanion.ui.theme.RecipeBookTheme
 import com.example.culinarycompanion.viewmodel.AppViewModel
 import com.example.culinarycompanion.viewmodel.AppViewModelFactory
+import com.example.culinarycompanion.viewmodel.AuthViewModel
+import com.example.culinarycompanion.repository.RecipeRepository
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.testTag
+import androidx.lifecycle.ViewModelProvider
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.firebase.FirebaseApp
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.ktx.Firebase
 
 class MainActivity : ComponentActivity() {
 
+    private val authViewModel: AuthViewModel by viewModels()
+    private lateinit var appViewModel: AppViewModel
+    private lateinit var preferencesManager: PreferencesManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        preferencesManager = PreferencesManager(this)
+
+        // Initialize Firebase Auth
+        Firebase.auth.useAppLanguage()
+        authViewModel.initialize(this)
 
         // Initialize database and repository
         val appDatabase = AppDatabase.getDatabase(applicationContext)
         val collectionDao = appDatabase.collectionDao()
-        val collectionRepository = CollectionRepository(collectionDao)
+        val savedRecipeDao = appDatabase.savedRecipeDao()
+        val recipeRepository = RecipeRepository()
+        val collectionRepository = CollectionRepository(collectionDao, savedRecipeDao)
+        val viewModelFactory = AppViewModelFactory(collectionRepository, recipeRepository)
+        appViewModel = ViewModelProvider(this, viewModelFactory)[AppViewModel::class.java]
 
-        // Create ViewModel factory
-        val viewModelFactory = AppViewModelFactory(collectionRepository)
-        val viewModel: AppViewModel by viewModels { viewModelFactory }
-
-        // Add this to MainActivity.kt
-        @Composable
-        fun AddCollectionDialog(
-            onDismiss: () -> Unit,
-            onConfirm: (String) -> Unit
-        ) {
-            var name by remember { mutableStateOf("") }
-
-            AlertDialog(
-                onDismissRequest = onDismiss,
-                title = { Text("Create New Collection") },
-                text = {
-                    TextField(
-                        value = name,
-                        onValueChange = { name = it },
-                        label = { Text("Collection Name") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                },
-                confirmButton = {
-                    Button(
-                        onClick = { onConfirm(name) },
-                        enabled = name.isNotBlank()
-                    ) {
-                        Text("Create")
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = onDismiss) {
-                        Text("Cancel")
-                    }
-                }
-            )
-        }
+        authViewModel.checkAuthState()
 
         setContent {
             RecipeBookTheme {
                 val navController = rememberNavController()
-                val collections by viewModel.collections.collectAsState()
-                val allRecipes = remember { DataSource.recipes }
+                val currentUser by authViewModel.currentUser.collectAsState()
+                val isLoading by authViewModel.isLoading.collectAsState()
+
+                // Handle auth state with navigation
+                LaunchedEffect(currentUser, isLoading) {
+                    when {
+                        isLoading -> {
+                            // Only navigate to loading if not already there
+                            if (navController.currentDestination?.route != "loading") {
+                                navController.navigate("loading") {
+                                    launchSingleTop = true
+                                }
+                            }
+                        }
+                        currentUser == null -> {
+                            navController.navigate("login") {
+                                popUpTo(0)
+                                launchSingleTop = true
+                            }
+                        }
+                        !preferencesManager.isProfileSetupComplete -> {
+                            // Only show profile setup if not completed
+                            navController.navigate("profileSetup") {
+                                popUpTo(0)
+                                launchSingleTop = true
+                            }
+                        }
+                        else -> {
+                            navController.navigate("recipeList") {
+                                popUpTo(0)
+                                launchSingleTop = true
+                            }
+                        }
+                    }
+                }
 
                 NavHost(
                     navController = navController,
-                    startDestination = "recipeList"
+                    startDestination = "loading"
                 ) {
-                    composable("recipeList") {
-                        RecipeApp(
+                    composable("loading") {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator()
+                        }
+                    }
+
+                    composable("login") {
+                        LoginScreen(navController, authViewModel)
+                    }
+
+                    composable("profileSetup") {
+                        ProfileSetupScreen(
                             navController = navController,
-                            recipes = allRecipes,
-                            collections = collections,
-                            onFavoriteToggle = { recipe, isFavorite ->
-                                viewModel.toggleFavorite(recipe, isFavorite)
-                            },
-                            onAddToCollection = { recipe, collectionId ->
-                                viewModel.addToCollection(recipe, collectionId)
+                            authViewModel = authViewModel,
+                            onProfileComplete = {
+                                navController.navigate("recipeList") {
+                                    popUpTo("login") { inclusive = true }
+                                    launchSingleTop = true
+                                }
                             }
                         )
                     }
+
+                    composable("recipeList") {
+                        // Use derivedStateOf to optimize performance
+                        val collections by appViewModel.collections.collectAsState(emptyList())
+                        val recipes by appViewModel.recipes.collectAsState(emptyList())
+
+                        RecipeApp(
+                            navController = navController,
+                            recipes = recipes,
+                            collections = collections,
+                            onFavoriteToggle = { recipe, isFavorite ->
+                                appViewModel.toggleFavorite(recipe, isFavorite)
+                            },
+                            onAddToCollection = { recipe, collectionId ->
+                                appViewModel.addToCollection(recipe, collectionId)
+                            }
+                        )
+                    }
+
                     composable("recipeDetail/{recipeId}") { backStackEntry ->
                         val recipeId = backStackEntry.arguments?.getString("recipeId")?.toIntOrNull()
-                        val recipe = allRecipes.find { it.id == recipeId }
+                        val recipes by appViewModel.recipes.collectAsState(emptyList())
+                        val recipe = recipes.find { it.id == recipeId }
 
                         if (recipe != null) {
+                            val collections by appViewModel.collections.collectAsState(emptyList())
+
                             RecipeDetailScreen(
                                 recipe = recipe,
                                 navController = navController,
                                 collections = collections,
                                 onFavoriteToggle = { isFavorite ->
-                                    viewModel.toggleFavorite(recipe, isFavorite)
+                                    appViewModel.toggleFavorite(recipe, isFavorite)
                                 },
                                 onAddToCollection = { collectionId ->
-                                    viewModel.addToCollection(recipe, collectionId)
+                                    appViewModel.addToCollection(recipe, collectionId)
                                 }
                             )
                         } else {
-                            Text("Recipe not found", modifier = Modifier.fillMaxSize())
+                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                Text("Recipe not found")
+                            }
                         }
                     }
+
                     composable("favorites") {
+                        val recipes by appViewModel.recipes.collectAsState(emptyList())
+                        val favoriteRecipes = remember(recipes) {
+                            recipes.filter { it.isFavorite }
+                        }
+
                         FavoritesScreen(
                             navController = navController,
-                            recipes = allRecipes,
+                            recipes = favoriteRecipes,
                             onFavoriteToggle = { recipe, isFavorite ->
-                                viewModel.toggleFavorite(recipe, isFavorite)
+                                appViewModel.toggleFavorite(recipe, isFavorite)
                             },
                             onRecipeClick = { recipe ->
-                                navController.navigate("recipeDetail/${recipe.id}")
+                                navController.navigate("recipeDetail/${recipe.id}") {
+                                    launchSingleTop = true
+                                }
                             }
                         )
                     }
+
                     composable("collections") {
+                        val collections by appViewModel.collections.collectAsState(emptyList())
+
                         CollectionsScreen(
                             navController = navController,
                             collections = collections,
-                            recipes = allRecipes,
                             onCollectionClick = { collectionId ->
-                                navController.navigate("collectionDetail/$collectionId")
+                                navController.navigate("collectionDetail/$collectionId") {
+                                    launchSingleTop = true
+                                }
                             },
                             onCreateCollection = {
-                                navController.navigate("createCollection")
+                                navController.navigate("createCollection") {
+                                    launchSingleTop = true
+                                }
                             },
                             onDeleteCollection = { collection ->
-                                viewModel.deleteCollection(collection)
+                                appViewModel.deleteCollection(collection)
                             }
                         )
                     }
+
                     composable("collectionDetail/{collectionId}") { backStackEntry ->
                         val collectionId = backStackEntry.arguments?.getString("collectionId")?.toLongOrNull()
+                        val collections by appViewModel.collections.collectAsState(emptyList())
                         val collection = collections.find { it.id == collectionId }
 
                         if (collection != null) {
                             CollectionDetailScreen(
                                 navController = navController,
                                 collection = collection,
-                                recipes = allRecipes,
+                                recipes = DataSource.recipes,
                                 onRecipeClick = { recipe ->
-                                    navController.navigate("recipeDetail/${recipe.id}")
+                                    navController.navigate("recipeDetail/${recipe.id}") {
+                                        launchSingleTop = true
+                                    }
                                 },
                                 onRemoveFromCollection = { recipe ->
-                                    viewModel.removeFromCollection(recipe, collection.id)
+                                    appViewModel.removeFromCollection(recipe, collection.id)
                                 }
                             )
                         } else {
-                            Text("Collection not found", modifier = Modifier.fillMaxSize())
+                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                Text("Collection not found")
+                            }
                         }
                     }
+
                     composable("createCollection") {
                         var showDialog by remember { mutableStateOf(true) }
 
@@ -186,7 +259,7 @@ class MainActivity : ComponentActivity() {
                                     navController.popBackStack()
                                 },
                                 onConfirm = { name ->
-                                    viewModel.createCollection(name)
+                                    appViewModel.createCollection(name)
                                     showDialog = false
                                     navController.popBackStack()
                                 }
@@ -197,6 +270,49 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        // Use the constant from AuthViewModel
+        if (requestCode == AuthViewModel.RC_SIGN_IN) {
+            authViewModel.handleSignInResult(data)
+        }
+    }
+}
+
+
+@Composable
+fun AddCollectionDialog(
+    onDismiss: () -> Unit,
+    onConfirm: (String) -> Unit
+) {
+    var name by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Create New Collection") },
+        text = {
+            TextField(
+                value = name,
+                onValueChange = { name = it },
+                label = { Text("Collection Name") },
+                modifier = Modifier.fillMaxWidth()
+            )
+        },
+        confirmButton = {
+            Button(
+                onClick = { onConfirm(name) },
+                enabled = name.isNotBlank()
+            ) {
+                Text("Create")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -217,10 +333,24 @@ fun RecipeApp(
             SmallTopAppBar(
                 title = { Text("Culinary Companion") },
                 actions = {
-                    IconButton(onClick = { navController.navigate("favorites") }) {
+                    IconButton(
+                        onClick = {
+                            navController.navigate("favorites") {
+                                launchSingleTop = true
+                            }
+                        },
+                        modifier = Modifier.testTag("favorites_button")
+                    ) {
                         Icon(Icons.Filled.Favorite, contentDescription = "Favorites")
                     }
-                    IconButton(onClick = { navController.navigate("collections") }) {
+                    IconButton(
+                        onClick = {
+                            navController.navigate("collections") {
+                                launchSingleTop = true
+                            }
+                        },
+                        modifier = Modifier.testTag("collections_button")
+                    ) {
                         Icon(Icons.Filled.Folder, contentDescription = "Collections")
                     }
                 }
@@ -230,26 +360,27 @@ fun RecipeApp(
         Column(
             modifier = Modifier
                 .padding(innerPadding)
+                .fillMaxSize()
         ) {
             SearchBar(
                 value = searchText.value,
                 onValueChange = { newValue -> searchText.value = newValue }
             )
 
-            // Fixed: Category filter row implementation
+            // Category filter row
             CategoryFilterRow(
                 selectedCategory = selectedCategory,
                 onCategorySelected = { category -> selectedCategory = category }
             )
 
-            // Fixed: Dietary filter row implementation
+            // Dietary filter row
             DietaryFilterRow(
                 selectedTags = selectedDietaryTags,
                 onTagSelected = { tag ->
                     selectedDietaryTags = if (selectedDietaryTags.contains(tag)) {
-                        selectedDietaryTags.minusElement(tag)  // Fixed ambiguity
+                        selectedDietaryTags - tag
                     } else {
-                        selectedDietaryTags.plusElement(tag)   // Fixed ambiguity
+                        selectedDietaryTags + tag
                     }
                 }
             )
@@ -261,7 +392,9 @@ fun RecipeApp(
                 selectedDietaryTags = selectedDietaryTags,
                 modifier = Modifier.fillMaxSize(),
                 onRecipeClick = { recipe ->
-                    navController.navigate("recipeDetail/${recipe.id}")
+                    navController.navigate("recipeDetail/${recipe.id}") {
+                        launchSingleTop = true
+                    }
                 },
                 onFavoriteToggle = onFavoriteToggle
             )
@@ -280,37 +413,46 @@ fun RecipeList(
     onFavoriteToggle: (Recipe, Boolean) -> Unit
 ) {
     val filteredRecipes = remember(recipes, searchQuery, selectedCategory, selectedDietaryTags) {
-        recipes.filter { recipe ->
-            val matchesSearch = searchQuery.isBlank() ||
-                    recipe.title.contains(searchQuery, ignoreCase = true) ||
-                    recipe.ingredients.any { it.contains(searchQuery, ignoreCase = true) }
+        if (recipes.isEmpty()) {
+            emptyList()
+        } else {
+            recipes.filter { recipe ->
+                val matchesSearch = searchQuery.isBlank() ||
+                        recipe.title.contains(searchQuery, ignoreCase = true) ||
+                        recipe.ingredients.any { it.contains(searchQuery, ignoreCase = true) }
 
-            val matchesCategory = selectedCategory == RecipeCategory.ALL ||
-                    recipe.category == selectedCategory.name
+                val matchesCategory = selectedCategory == RecipeCategory.ALL ||
+                        recipe.category == selectedCategory.name
 
-            val matchesDietary = selectedDietaryTags.isEmpty() ||
-                    selectedDietaryTags.all { tag -> recipe.dietaryTags.contains(tag) }
+                val matchesDietary = selectedDietaryTags.isEmpty() ||
+                        selectedDietaryTags.all { tag -> recipe.dietaryTags.contains(tag) }
 
-            matchesSearch && matchesCategory && matchesDietary
+                matchesSearch && matchesCategory && matchesDietary
+            }
         }
     }
 
-    LazyColumn(
-        modifier = modifier.padding(horizontal = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        items(filteredRecipes) { recipe ->
-            RecipeCard(
-                recipe = recipe,
-                modifier = Modifier.fillMaxWidth(),
-                onFavoriteToggle = { isFavorite -> onFavoriteToggle(recipe, isFavorite) },
-                onClick = { onRecipeClick(recipe) }
-            )
+    if (filteredRecipes.isEmpty()) {
+        Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text("No recipes found")
+        }
+    } else {
+        LazyColumn(
+            modifier = modifier.padding(horizontal = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(filteredRecipes) { recipe ->
+                RecipeCard(
+                    recipe = recipe,
+                    modifier = Modifier.fillMaxWidth(),
+                    onFavoriteToggle = { isFavorite -> onFavoriteToggle(recipe, isFavorite) },
+                    onClick = { onRecipeClick(recipe) }
+                )
+            }
         }
     }
 }
 
-// Add these missing composable functions
 @Composable
 fun CategoryFilterRow(
     selectedCategory: RecipeCategory,

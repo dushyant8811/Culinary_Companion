@@ -16,6 +16,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.culinarycompanion.components.CollectionItem
+import com.example.culinarycompanion.data.DataSource.recipes
 import com.example.culinarycompanion.model.Recipe
 import com.example.culinarycompanion.model.RecipeCollection
 
@@ -24,7 +25,6 @@ import com.example.culinarycompanion.model.RecipeCollection
 fun CollectionsScreen(
     navController: NavController,
     collections: List<RecipeCollection>,
-    recipes: List<Recipe>,
     onCollectionClick: (Long) -> Unit,
     onDeleteCollection: (RecipeCollection) -> Unit,
     onCreateCollection: () -> Unit

@@ -13,4 +13,16 @@ class Converters {
     fun fromList(list: List<Int>?): String {
         return list?.joinToString(",") ?: ""
     }
+
+    // Add these new converters for List<String>
+    @TypeConverter
+    fun fromStringList(value: String?): List<String> {
+        if (value.isNullOrEmpty()) return emptyList()
+        return value.split(",")
+    }
+
+    @TypeConverter
+    fun toStringList(list: List<String>?): String {
+        return list?.joinToString(",") ?: ""
+    }
 }
