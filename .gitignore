@@ -14,3 +14,7 @@
 .cxx
 local.properties
 app/google-services.json
+database-scripts/scripts/serviceAccountKey.json
+database-scripts/node_modules/
+*.log
+*.keystore

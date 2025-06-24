@@ -23,6 +23,10 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.testTag
+import androidx.lifecycle.ViewModelProvider
 import com.example.culinarycompanion.components.*
 import com.example.culinarycompanion.data.DataSource
 import com.example.culinarycompanion.database.AppDatabase
@@ -36,10 +40,6 @@ import com.example.culinarycompanion.viewmodel.AppViewModel
 import com.example.culinarycompanion.viewmodel.AppViewModelFactory
 import com.example.culinarycompanion.viewmodel.AuthViewModel
 import com.example.culinarycompanion.repository.RecipeRepository
-import androidx.compose.runtime.collectAsState
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.platform.testTag
-import androidx.lifecycle.ViewModelProvider
 import com.example.culinarycompanion.repository.FirebaseRecipeRepository
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase

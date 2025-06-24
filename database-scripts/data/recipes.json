@@ -1,0 +1,545 @@
+[
+  {
+    "title": "Avocado Toast with Poached Egg",
+    "ingredients": [
+      "2 slices whole grain bread",
+      "1 ripe avocado",
+      "2 eggs",
+      "1 tbsp lemon juice",
+      "1/4 tsp red pepper flakes",
+      "Salt and pepper to taste"
+    ],
+    "instructions": [
+      "Toast bread until golden brown",
+      "Mash avocado with lemon juice, salt and pepper",
+      "Poach eggs in simmering water for 3-4 minutes",
+      "Spread avocado mixture on toast",
+      "Top with poached eggs and red pepper flakes"
+    ],
+    "prepTime": 5,
+    "cookTime": 10,
+    "servings": 2,
+    "category": "Breakfast",
+    "dietaryTags": ["Vegetarian"],
+    "imageUrl": "https://example.com/avocado-toast.jpg",
+    "isFavorite": true
+  },
+  {
+    "title": "Berry Oatmeal Smoothie Bowl",
+    "ingredients": [
+      "1 cup rolled oats",
+      "1 banana",
+      "1/2 cup mixed berries",
+      "1/2 cup almond milk",
+      "1 tbsp chia seeds",
+      "1 tbsp honey"
+    ],
+    "instructions": [
+      "Blend oats, banana, berries and almond milk",
+      "Pour into bowl",
+      "Top with chia seeds and honey",
+      "Add extra berries for garnish"
+    ],
+    "prepTime": 5,
+    "cookTime": 0,
+    "servings": 1,
+    "category": "Breakfast",
+    "dietaryTags": ["Vegetarian", "Vegan", "Gluten-Free"],
+    "imageUrl": "https://example.com/smoothie-bowl.jpg",
+    "isFavorite": false
+  },
+  {
+    "title": "Breakfast Burrito",
+    "ingredients": [
+      "2 large flour tortillas",
+      "4 eggs",
+      "1/2 cup black beans",
+      "1/4 cup shredded cheese",
+      "1/4 cup salsa",
+      "1/4 avocado, sliced"
+    ],
+    "instructions": [
+      "Scramble eggs in pan",
+      "Warm tortillas in separate pan",
+      "Layer eggs, beans, cheese and salsa on tortillas",
+      "Add avocado slices",
+      "Roll into burritos and serve"
+    ],
+    "prepTime": 10,
+    "cookTime": 10,
+    "servings": 2,
+    "category": "Breakfast",
+    "dietaryTags": ["Vegetarian"],
+    "imageUrl": "https://example.com/breakfast-burrito.jpg",
+    "isFavorite": false
+  },
+  {
+    "title": "Greek Yogurt Parfait",
+    "ingredients": [
+      "1 cup Greek yogurt",
+      "1/2 cup granola",
+      "1/2 cup mixed berries",
+      "1 tbsp honey",
+      "1 tbsp sliced almonds"
+    ],
+    "instructions": [
+      "Layer yogurt, berries and granola in glass",
+      "Repeat layers",
+      "Drizzle with honey",
+      "Top with almonds"
+    ],
+    "prepTime": 5,
+    "cookTime": 0,
+    "servings": 1,
+    "category": "Breakfast",
+    "dietaryTags": ["Vegetarian", "Gluten-Free"],
+    "imageUrl": "https://example.com/yogurt-parfait.jpg",
+    "isFavorite": true
+  },
+  {
+    "title": "French Toast",
+    "ingredients": [
+      "4 slices bread",
+      "2 eggs",
+      "1/2 cup milk",
+      "1 tsp vanilla extract",
+      "1 tsp cinnamon",
+      "2 tbsp butter",
+      "Maple syrup for serving"
+    ],
+    "instructions": [
+      "Whisk eggs, milk, vanilla and cinnamon",
+      "Dip bread slices in mixture",
+      "Melt butter in pan",
+      "Cook bread until golden brown on both sides",
+      "Serve with maple syrup"
+    ],
+    "prepTime": 10,
+    "cookTime": 10,
+    "servings": 2,
+    "category": "Breakfast",
+    "dietaryTags": ["Vegetarian"],
+    "imageUrl": "https://example.com/french-toast.jpg",
+    "isFavorite": false
+  },
+  {
+      "title": "Quinoa Salad Bowl",
+      "ingredients": [
+        "1 cup cooked quinoa",
+        "1/2 cup chickpeas",
+        "1/2 cup cherry tomatoes",
+        "1/4 cucumber, diced",
+        "2 tbsp feta cheese",
+        "2 tbsp lemon vinaigrette"
+      ],
+      "instructions": [
+        "Combine quinoa and chickpeas in bowl",
+        "Add tomatoes and cucumber",
+        "Top with feta cheese",
+        "Drizzle with dressing",
+        "Toss gently to combine"
+      ],
+      "prepTime": 10,
+      "cookTime": 0,
+      "servings": 1,
+      "category": "Lunch",
+      "dietaryTags": ["Vegetarian", "Gluten-Free"],
+      "imageUrl": "https://example.com/quinoa-salad.jpg",
+      "isFavorite": true
+    },
+    {
+      "title": "Chicken Caesar Wrap",
+      "ingredients": [
+        "1 large tortilla",
+        "1 grilled chicken breast, sliced",
+        "2 cups romaine lettuce",
+        "2 tbsp Caesar dressing",
+        "2 tbsp grated Parmesan",
+        "1/4 cup croutons"
+      ],
+      "instructions": [
+        "Spread dressing on tortilla",
+        "Layer lettuce, chicken, Parmesan and croutons",
+        "Roll tightly into wrap",
+        "Cut in half and serve"
+      ],
+      "prepTime": 10,
+      "cookTime": 0,
+      "servings": 1,
+      "category": "Lunch",
+      "dietaryTags": [],
+      "imageUrl": "https://example.com/caesar-wrap.jpg",
+      "isFavorite": false
+    },
+    {
+      "title": "Minestrone Soup",
+      "ingredients": [
+        "2 tbsp olive oil",
+        "1 onion, diced",
+        "2 carrots, diced",
+        "2 celery stalks, diced",
+        "4 cups vegetable broth",
+        "1 can diced tomatoes",
+        "1 cup pasta shells",
+        "1 can kidney beans"
+      ],
+      "instructions": [
+        "Sauté onions, carrots and celery in oil",
+        "Add broth and tomatoes, bring to boil",
+        "Add pasta and cook for 10 minutes",
+        "Stir in beans and cook 5 more minutes",
+        "Season with salt and pepper"
+      ],
+      "prepTime": 15,
+      "cookTime": 25,
+      "servings": 4,
+      "category": "Lunch",
+      "dietaryTags": ["Vegetarian", "Vegan"],
+      "imageUrl": "https://example.com/minestrone.jpg",
+      "isFavorite": true
+    },
+    {
+      "title": "Caprese Sandwich",
+      "ingredients": [
+        "2 slices ciabatta bread",
+        "1 tomato, sliced",
+        "4 oz fresh mozzarella",
+        "Fresh basil leaves",
+        "1 tbsp balsamic glaze",
+        "1 tbsp olive oil"
+      ],
+      "instructions": [
+        "Brush bread with olive oil and toast",
+        "Layer mozzarella, tomato and basil on bread",
+        "Drizzle with balsamic glaze",
+        "Top with second bread slice",
+        "Cut in half and serve"
+      ],
+      "prepTime": 10,
+      "cookTime": 5,
+      "servings": 1,
+      "category": "Lunch",
+      "dietaryTags": ["Vegetarian"],
+      "imageUrl": "https://example.com/caprese-sandwich.jpg",
+      "isFavorite": false
+    },
+    {
+      "title": "Tuna Salad",
+      "ingredients": [
+        "1 can tuna, drained",
+        "2 tbsp mayonnaise",
+        "1 tbsp lemon juice",
+        "1/4 cup celery, diced",
+        "2 tbsp red onion, minced",
+        "Salt and pepper to taste"
+      ],
+      "instructions": [
+        "Combine tuna and mayonnaise",
+        "Add lemon juice and mix",
+        "Stir in celery and onion",
+        "Season with salt and pepper",
+        "Chill before serving"
+      ],
+      "prepTime": 10,
+      "cookTime": 0,
+      "servings": 1,
+      "category": "Lunch",
+      "dietaryTags": [],
+      "imageUrl": "https://example.com/tuna-salad.jpg",
+      "isFavorite": false
+    },
+    {
+      "title": "Veggie Burger",
+      "ingredients": [
+        "1 veggie burger patty",
+        "1 burger bun",
+        "1 slice cheddar cheese",
+        "Lettuce leaves",
+        "Tomato slices",
+        "1 tbsp burger sauce"
+      ],
+      "instructions": [
+        "Cook burger patty according to package",
+        "Toast burger bun",
+        "Place patty on bun",
+        "Add cheese, lettuce and tomato",
+        "Spread sauce on top bun",
+        "Assemble and serve"
+      ],
+      "prepTime": 5,
+      "cookTime": 10,
+      "servings": 1,
+      "category": "Lunch",
+      "dietaryTags": ["Vegetarian"],
+      "imageUrl": "https://example.com/veggie-burger.jpg",
+      "isFavorite": true
+    },
+      {
+        "title": "Grilled Salmon with Asparagus",
+        "ingredients": [
+          "2 salmon fillets",
+          "1 bunch asparagus",
+          "2 tbsp olive oil",
+          "1 lemon, sliced",
+          "2 cloves garlic, minced",
+          "Salt and pepper to taste"
+        ],
+        "instructions": [
+          "Preheat grill to medium-high",
+          "Season salmon with salt, pepper and garlic",
+          "Toss asparagus with olive oil",
+          "Grill salmon for 4-5 minutes per side",
+          "Grill asparagus for 8-10 minutes",
+          "Serve with lemon slices"
+        ],
+        "prepTime": 10,
+        "cookTime": 15,
+        "servings": 2,
+        "category": "Dinner",
+        "dietaryTags": ["Gluten-Free"],
+        "imageUrl": "https://example.com/grilled-salmon.jpg",
+        "isFavorite": true
+      },
+      {
+        "title": "Beef Tacos",
+        "ingredients": [
+          "1 lb ground beef",
+          "8 taco shells",
+          "1 packet taco seasoning",
+          "1 cup shredded lettuce",
+          "1/2 cup diced tomatoes",
+          "1/2 cup shredded cheese",
+          "1/4 cup sour cream"
+        ],
+        "instructions": [
+          "Brown beef in skillet",
+          "Add taco seasoning and water",
+          "Simmer for 5 minutes",
+          "Warm taco shells",
+          "Fill shells with beef mixture",
+          "Top with lettuce, tomatoes, cheese and sour cream"
+        ],
+        "prepTime": 15,
+        "cookTime": 15,
+        "servings": 4,
+        "category": "Dinner",
+        "dietaryTags": [],
+        "imageUrl": "https://example.com/beef-tacos.jpg",
+        "isFavorite": false
+      },
+      {
+        "title": "Mushroom Risotto",
+        "ingredients": [
+          "1 cup arborio rice",
+          "4 cups vegetable broth",
+          "2 cups mushrooms, sliced",
+          "1 onion, diced",
+          "1/2 cup white wine",
+          "1/4 cup Parmesan cheese",
+          "2 tbsp butter"
+        ],
+        "instructions": [
+          "Sauté onions and mushrooms in butter",
+          "Add rice and toast for 2 minutes",
+          "Pour in wine and cook until absorbed",
+          "Add broth 1/2 cup at a time, stirring constantly",
+          "When rice is creamy, stir in Parmesan",
+          "Season with salt and pepper"
+        ],
+        "prepTime": 15,
+        "cookTime": 30,
+        "servings": 3,
+        "category": "Dinner",
+        "dietaryTags": ["Vegetarian"],
+        "imageUrl": "https://example.com/mushroom-risotto.jpg",
+        "isFavorite": true
+      },
+      {
+        "title": "Chicken Curry",
+        "ingredients": [
+          "1 lb chicken breast, cubed",
+          "1 onion, diced",
+          "2 cloves garlic, minced",
+          "1 tbsp curry powder",
+          "1 can coconut milk",
+          "1 cup frozen peas",
+          "2 tbsp vegetable oil"
+        ],
+        "instructions": [
+          "Heat oil and sauté onions and garlic",
+          "Add chicken and cook until browned",
+          "Stir in curry powder",
+          "Pour in coconut milk and simmer for 15 minutes",
+          "Add peas and cook 5 more minutes",
+          "Serve with rice"
+        ],
+        "prepTime": 15,
+        "cookTime": 25,
+        "servings": 4,
+        "category": "Dinner",
+        "dietaryTags": ["Gluten-Free"],
+        "imageUrl": "https://example.com/chicken-curry.jpg",
+        "isFavorite": false
+      },
+      {
+        "title": "Margherita Pizza",
+        "ingredients": [
+          "1 pizza dough",
+          "1/2 cup pizza sauce",
+          "8 oz fresh mozzarella",
+          "Fresh basil leaves",
+          "2 tbsp olive oil",
+          "1/4 cup Parmesan cheese"
+        ],
+        "instructions": [
+          "Preheat oven to 475°F (245°C)",
+          "Roll out dough on baking sheet",
+          "Spread sauce over dough",
+          "Top with sliced mozzarella",
+          "Bake for 12-15 minutes",
+          "Top with fresh basil and drizzle with olive oil"
+        ],
+        "prepTime": 15,
+        "cookTime": 15,
+        "servings": 4,
+        "category": "Dinner",
+        "dietaryTags": ["Vegetarian"],
+        "imageUrl": "https://example.com/margherita-pizza.jpg",
+        "isFavorite": true
+      },
+        {
+          "title": "Apple Pie",
+          "ingredients": [
+            "6 cups apples, peeled and sliced",
+            "1 cup sugar",
+            "2 tbsp flour",
+            "1 tsp cinnamon",
+            "1/4 tsp nutmeg",
+            "2 pie crusts",
+            "2 tbsp butter"
+          ],
+          "instructions": [
+            "Preheat oven to 425°F (220°C)",
+            "Mix apples with sugar, flour and spices",
+            "Line pie plate with one crust",
+            "Add apple mixture and dot with butter",
+            "Cover with second crust and seal edges",
+            "Bake for 45-50 minutes"
+          ],
+          "prepTime": 30,
+          "cookTime": 50,
+          "servings": 8,
+          "category": "Dessert",
+          "dietaryTags": ["Vegetarian"],
+          "imageUrl": "https://example.com/apple-pie.jpg",
+          "isFavorite": true
+        },
+        {
+          "title": "Chocolate Chip Cookies",
+          "ingredients": [
+            "2 1/4 cups flour",
+            "1 tsp baking soda",
+            "1 cup butter, softened",
+            "3/4 cup brown sugar",
+            "3/4 cup white sugar",
+            "2 eggs",
+            "2 cups chocolate chips"
+          ],
+          "instructions": [
+            "Preheat oven to 375°F (190°C)",
+            "Cream butter and sugars",
+            "Beat in eggs one at a time",
+            "Mix in flour and baking soda",
+            "Stir in chocolate chips",
+            "Drop by spoonfuls onto baking sheet",
+            "Bake for 9-11 minutes"
+          ],
+          "prepTime": 20,
+          "cookTime": 10,
+          "servings": 24,
+          "category": "Dessert",
+          "dietaryTags": ["Vegetarian"],
+          "imageUrl": "https://example.com/chocolate-chip-cookies.jpg",
+          "isFavorite": true
+        },
+        {
+          "title": "Vanilla Ice Cream",
+          "ingredients": [
+            "2 cups heavy cream",
+            "1 cup whole milk",
+            "3/4 cup sugar",
+            "1 tbsp vanilla extract",
+            "Pinch of salt"
+          ],
+          "instructions": [
+            "Whisk all ingredients together",
+            "Chill mixture for 2 hours",
+            "Pour into ice cream maker",
+            "Churn according to manufacturer instructions",
+            "Freeze for 4 hours before serving"
+          ],
+          "prepTime": 15,
+          "cookTime": 0,
+          "servings": 6,
+          "category": "Dessert",
+          "dietaryTags": ["Vegetarian"],
+          "imageUrl": "https://example.com/vanilla-ice-cream.jpg",
+          "isFavorite": false
+        },
+        {
+          "title": "Cheesecake",
+          "ingredients": [
+            "2 cups graham cracker crumbs",
+            "1/4 cup sugar",
+            "1/2 cup melted butter",
+            "3 packages cream cheese",
+            "1 cup sugar",
+            "3 eggs",
+            "1 tsp vanilla extract"
+          ],
+          "instructions": [
+            "Preheat oven to 325°F (165°C)",
+            "Mix crumbs, sugar and butter for crust",
+            "Press into springform pan",
+            "Beat cream cheese and sugar until smooth",
+            "Add eggs one at a time",
+            "Stir in vanilla",
+            "Pour over crust",
+            "Bake for 45-50 minutes"
+          ],
+          "prepTime": 30,
+          "cookTime": 50,
+          "servings": 10,
+          "category": "Dessert",
+          "dietaryTags": ["Vegetarian"],
+          "imageUrl": "https://example.com/cheesecake.jpg",
+          "isFavorite": true
+        },
+        {
+          "title": "Fruit Salad",
+          "ingredients": [
+            "1 cup strawberries",
+            "1 cup blueberries",
+            "1 cup pineapple chunks",
+            "1 cup grapes",
+            "1 kiwi, sliced",
+            "1 tbsp honey",
+            "1 tbsp lime juice"
+          ],
+          "instructions": [
+            "Wash and prepare all fruits",
+            "Combine in large bowl",
+            "Whisk honey and lime juice",
+            "Drizzle over fruit",
+            "Toss gently to coat",
+            "Chill before serving"
+          ],
+          "prepTime": 15,
+          "cookTime": 0,
+          "servings": 4,
+          "category": "Dessert",
+          "dietaryTags": ["Vegetarian", "Vegan", "Gluten-Free"],
+          "imageUrl": "https://example.com/fruit-salad.jpg",
+          "isFavorite": false
+        }
+      ]
