@@ -36,15 +36,16 @@ import com.example.culinarycompanion.viewmodel.AppViewModel
 import com.example.culinarycompanion.viewmodel.AppViewModelFactory
 import com.example.culinarycompanion.viewmodel.AuthViewModel
 import com.example.culinarycompanion.repository.RecipeRepository
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.testTag
 import androidx.lifecycle.ViewModelProvider
-import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.firebase.FirebaseApp
+import com.example.culinarycompanion.repository.FirebaseRecipeRepository
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
@@ -60,13 +61,28 @@ class MainActivity : ComponentActivity() {
         Firebase.auth.useAppLanguage()
         authViewModel.initialize(this)
 
+        // Use Firebase repository directly
+        val firebaseRepo = FirebaseRecipeRepository()
+
+        val recipeRepository = object : RecipeRepository {
+            override suspend fun getAllRecipes(): List<Recipe> {
+                return firebaseRepo.getAllRecipes()
+            }
+
+            override suspend fun getRecipeById(id: String): Recipe? {
+                return firebaseRepo.getRecipeById(id)
+            }
+
+        }
+
         // Initialize database and repository
         val appDatabase = AppDatabase.getDatabase(applicationContext)
         val collectionDao = appDatabase.collectionDao()
         val savedRecipeDao = appDatabase.savedRecipeDao()
-        val recipeRepository = RecipeRepository()
+
         val collectionRepository = CollectionRepository(collectionDao, savedRecipeDao)
         val viewModelFactory = AppViewModelFactory(collectionRepository, recipeRepository)
+
         appViewModel = ViewModelProvider(this, viewModelFactory)[AppViewModel::class.java]
 
         authViewModel.checkAuthState()
@@ -81,26 +97,27 @@ class MainActivity : ComponentActivity() {
                 LaunchedEffect(currentUser, isLoading) {
                     when {
                         isLoading -> {
-                            // Only navigate to loading if not already there
                             if (navController.currentDestination?.route != "loading") {
                                 navController.navigate("loading") {
                                     launchSingleTop = true
                                 }
                             }
                         }
+
                         currentUser == null -> {
                             navController.navigate("login") {
                                 popUpTo(0)
                                 launchSingleTop = true
                             }
                         }
+
                         !preferencesManager.isProfileSetupComplete -> {
-                            // Only show profile setup if not completed
                             navController.navigate("profileSetup") {
                                 popUpTo(0)
                                 launchSingleTop = true
                             }
                         }
+
                         else -> {
                             navController.navigate("recipeList") {
                                 popUpTo(0)
@@ -115,7 +132,10 @@ class MainActivity : ComponentActivity() {
                     startDestination = "loading"
                 ) {
                     composable("loading") {
-                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
                             CircularProgressIndicator()
                         }
                     }
@@ -138,7 +158,6 @@ class MainActivity : ComponentActivity() {
                     }
 
                     composable("recipeList") {
-                        // Use derivedStateOf to optimize performance
                         val collections by appViewModel.collections.collectAsState(emptyList())
                         val recipes by appViewModel.recipes.collectAsState(emptyList())
 
@@ -156,7 +175,7 @@ class MainActivity : ComponentActivity() {
                     }
 
                     composable("recipeDetail/{recipeId}") { backStackEntry ->
-                        val recipeId = backStackEntry.arguments?.getString("recipeId")?.toIntOrNull()
+                        val recipeId = backStackEntry.arguments?.getString("recipeId")
                         val recipes by appViewModel.recipes.collectAsState(emptyList())
                         val recipe = recipes.find { it.id == recipeId }
 
@@ -175,7 +194,10 @@ class MainActivity : ComponentActivity() {
                                 }
                             )
                         } else {
-                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
                                 Text("Recipe not found")
                             }
                         }
@@ -229,21 +251,27 @@ class MainActivity : ComponentActivity() {
                         val collection = collections.find { it.id == collectionId }
 
                         if (collection != null) {
+                            val recipes by appViewModel.recipes.collectAsState(emptyList())
+                            val collectionRecipes = remember(recipes, collection) {
+                                recipes.filter { recipe -> recipe.id in collection.recipeIds }
+                            }
+
                             CollectionDetailScreen(
                                 navController = navController,
                                 collection = collection,
-                                recipes = DataSource.recipes,
+                                recipes = collectionRecipes,
                                 onRecipeClick = { recipe ->
-                                    navController.navigate("recipeDetail/${recipe.id}") {
-                                        launchSingleTop = true
-                                    }
+                                    navController.navigate("recipeDetail/${recipe.id}")
                                 },
                                 onRemoveFromCollection = { recipe ->
                                     appViewModel.removeFromCollection(recipe, collection.id)
                                 }
                             )
                         } else {
-                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
                                 Text("Collection not found")
                             }
                         }
@@ -273,229 +301,232 @@ class MainActivity : ComponentActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        // Use the constant from AuthViewModel
         if (requestCode == AuthViewModel.RC_SIGN_IN) {
             authViewModel.handleSignInResult(data)
         }
     }
-}
 
+    @Composable
+    fun AddCollectionDialog(
+        onDismiss: () -> Unit,
+        onConfirm: (String) -> Unit
+    ) {
+        var name by remember { mutableStateOf("") }
 
-@Composable
-fun AddCollectionDialog(
-    onDismiss: () -> Unit,
-    onConfirm: (String) -> Unit
-) {
-    var name by remember { mutableStateOf("") }
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            title = { Text("Create New Collection") },
+            text = {
+                TextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Collection Name") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = { onConfirm(name) },
+                    enabled = name.isNotBlank()
+                ) {
+                    Text("Create")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = onDismiss) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Create New Collection") },
-        text = {
-            TextField(
-                value = name,
-                onValueChange = { name = it },
-                label = { Text("Collection Name") },
-                modifier = Modifier.fillMaxWidth()
-            )
-        },
-        confirmButton = {
-            Button(
-                onClick = { onConfirm(name) },
-                enabled = name.isNotBlank()
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    fun RecipeApp(
+        navController: NavController,
+        recipes: List<Recipe>,
+        collections: List<RecipeCollection>,
+        onFavoriteToggle: (Recipe, Boolean) -> Unit,
+        onAddToCollection: (Recipe, Long) -> Unit
+    ) {
+        val searchText = remember { mutableStateOf(TextFieldValue("")) }
+        var selectedCategory by remember { mutableStateOf(RecipeCategory.ALL) }
+        var selectedDietaryTags by remember { mutableStateOf(emptySet<String>()) }
+
+        Scaffold(
+            topBar = {
+                SmallTopAppBar(
+                    title = { Text("Culinary Companion") },
+                    actions = {
+                        IconButton(
+                            onClick = {
+                                navController.navigate("favorites") {
+                                    launchSingleTop = true
+                                }
+                            },
+                            modifier = Modifier.testTag("favorites_button")
+                        ) {
+                            Icon(Icons.Filled.Favorite, contentDescription = "Favorites")
+                        }
+                        IconButton(
+                            onClick = {
+                                navController.navigate("collections") {
+                                    launchSingleTop = true
+                                }
+                            },
+                            modifier = Modifier.testTag("collections_button")
+                        ) {
+                            Icon(Icons.Filled.Folder, contentDescription = "Collections")
+                        }
+                    }
+                )
+            }
+        ) { innerPadding ->
+            Column(
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .fillMaxSize()
             ) {
-                Text("Create")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        }
-    )
-}
+                SearchBar(
+                    value = searchText.value,
+                    onValueChange = { newValue -> searchText.value = newValue }
+                )
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun RecipeApp(
-    navController: NavController,
-    recipes: List<Recipe>,
-    collections: List<RecipeCollection>,
-    onFavoriteToggle: (Recipe, Boolean) -> Unit,
-    onAddToCollection: (Recipe, Long) -> Unit
-) {
-    val searchText = remember { mutableStateOf(TextFieldValue("")) }
-    var selectedCategory by remember { mutableStateOf(RecipeCategory.ALL) }
-    var selectedDietaryTags by remember { mutableStateOf(emptySet<String>()) }
+                CategoryFilterRow(
+                    selectedCategory = selectedCategory,
+                    onCategorySelected = { category -> selectedCategory = category }
+                )
 
-    Scaffold(
-        topBar = {
-            SmallTopAppBar(
-                title = { Text("Culinary Companion") },
-                actions = {
-                    IconButton(
-                        onClick = {
-                            navController.navigate("favorites") {
-                                launchSingleTop = true
-                            }
-                        },
-                        modifier = Modifier.testTag("favorites_button")
-                    ) {
-                        Icon(Icons.Filled.Favorite, contentDescription = "Favorites")
+                DietaryFilterRow(
+                    selectedTags = selectedDietaryTags,
+                    onTagSelected = { tag ->
+                        selectedDietaryTags = if (selectedDietaryTags.contains(tag)) {
+                            selectedDietaryTags - tag
+                        } else {
+                            selectedDietaryTags + tag
+                        }
                     }
-                    IconButton(
-                        onClick = {
-                            navController.navigate("collections") {
-                                launchSingleTop = true
-                            }
-                        },
-                        modifier = Modifier.testTag("collections_button")
-                    ) {
-                        Icon(Icons.Filled.Folder, contentDescription = "Collections")
-                    }
-                }
-            )
-        }
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize()
-        ) {
-            SearchBar(
-                value = searchText.value,
-                onValueChange = { newValue -> searchText.value = newValue }
-            )
+                )
 
-            // Category filter row
-            CategoryFilterRow(
-                selectedCategory = selectedCategory,
-                onCategorySelected = { category -> selectedCategory = category }
-            )
-
-            // Dietary filter row
-            DietaryFilterRow(
-                selectedTags = selectedDietaryTags,
-                onTagSelected = { tag ->
-                    selectedDietaryTags = if (selectedDietaryTags.contains(tag)) {
-                        selectedDietaryTags - tag
-                    } else {
-                        selectedDietaryTags + tag
-                    }
-                }
-            )
-
-            RecipeList(
-                recipes = recipes,
-                searchQuery = searchText.value.text,
-                selectedCategory = selectedCategory,
-                selectedDietaryTags = selectedDietaryTags,
-                modifier = Modifier.fillMaxSize(),
-                onRecipeClick = { recipe ->
-                    navController.navigate("recipeDetail/${recipe.id}") {
-                        launchSingleTop = true
-                    }
-                },
-                onFavoriteToggle = onFavoriteToggle
-            )
-        }
-    }
-}
-
-@Composable
-fun RecipeList(
-    recipes: List<Recipe>,
-    searchQuery: String,
-    selectedCategory: RecipeCategory,
-    selectedDietaryTags: Set<String>,
-    modifier: Modifier = Modifier,
-    onRecipeClick: (Recipe) -> Unit,
-    onFavoriteToggle: (Recipe, Boolean) -> Unit
-) {
-    val filteredRecipes = remember(recipes, searchQuery, selectedCategory, selectedDietaryTags) {
-        if (recipes.isEmpty()) {
-            emptyList()
-        } else {
-            recipes.filter { recipe ->
-                val matchesSearch = searchQuery.isBlank() ||
-                        recipe.title.contains(searchQuery, ignoreCase = true) ||
-                        recipe.ingredients.any { it.contains(searchQuery, ignoreCase = true) }
-
-                val matchesCategory = selectedCategory == RecipeCategory.ALL ||
-                        recipe.category == selectedCategory.name
-
-                val matchesDietary = selectedDietaryTags.isEmpty() ||
-                        selectedDietaryTags.all { tag -> recipe.dietaryTags.contains(tag) }
-
-                matchesSearch && matchesCategory && matchesDietary
-            }
-        }
-    }
-
-    if (filteredRecipes.isEmpty()) {
-        Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("No recipes found")
-        }
-    } else {
-        LazyColumn(
-            modifier = modifier.padding(horizontal = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(filteredRecipes) { recipe ->
-                RecipeCard(
-                    recipe = recipe,
-                    modifier = Modifier.fillMaxWidth(),
-                    onFavoriteToggle = { isFavorite -> onFavoriteToggle(recipe, isFavorite) },
-                    onClick = { onRecipeClick(recipe) }
+                RecipeList(
+                    recipes = recipes,
+                    searchQuery = searchText.value.text,
+                    selectedCategory = selectedCategory,
+                    selectedDietaryTags = selectedDietaryTags,
+                    modifier = Modifier.fillMaxSize(),
+                    onRecipeClick = { recipe ->
+                        navController.navigate("recipeDetail/${recipe.id}") {
+                            launchSingleTop = true
+                        }
+                    },
+                    onFavoriteToggle = onFavoriteToggle
                 )
             }
         }
     }
-}
 
-@Composable
-fun CategoryFilterRow(
-    selectedCategory: RecipeCategory,
-    onCategorySelected: (RecipeCategory) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val scrollState = rememberScrollState()
-    Row(
-        modifier = modifier
-            .padding(vertical = 8.dp)
-            .horizontalScroll(scrollState)
+    @Composable
+    fun RecipeList(
+        recipes: List<Recipe>,
+        searchQuery: String,
+        selectedCategory: RecipeCategory,
+        selectedDietaryTags: Set<String>,
+        modifier: Modifier = Modifier,
+        onRecipeClick: (Recipe) -> Unit,
+        onFavoriteToggle: (Recipe, Boolean) -> Unit
     ) {
-        RecipeCategory.values().forEach { category ->
-            FilterChip(
-                selected = selectedCategory == category,
-                onClick = { onCategorySelected(category) },
-                modifier = Modifier.padding(horizontal = 4.dp),
-                label = { Text(category.name) }
-            )
+        val filteredRecipes =
+            remember(recipes, searchQuery, selectedCategory, selectedDietaryTags) {
+                if (recipes.isEmpty()) {
+                    emptyList()
+                } else {
+                    recipes.filter { recipe ->
+                        val matchesSearch = searchQuery.isBlank() ||
+                                recipe.title.contains(searchQuery, ignoreCase = true) ||
+                                recipe.ingredients.any {
+                                    it.contains(
+                                        searchQuery,
+                                        ignoreCase = true
+                                    )
+                                }
+
+                        val matchesCategory = selectedCategory == RecipeCategory.ALL ||
+                                recipe.category == selectedCategory.name
+
+                        val matchesDietary = selectedDietaryTags.isEmpty() ||
+                                selectedDietaryTags.all { tag -> recipe.dietaryTags.contains(tag) }
+
+                        matchesSearch && matchesCategory && matchesDietary
+                    }
+                }
+            }
+
+        if (filteredRecipes.isEmpty()) {
+            Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("No recipes found")
+            }
+        } else {
+            LazyColumn(
+                modifier = modifier.padding(horizontal = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(filteredRecipes) { recipe ->
+                    RecipeCard(
+                        recipe = recipe,
+                        modifier = Modifier.fillMaxWidth(),
+                        onFavoriteToggle = { isFavorite -> onFavoriteToggle(recipe, isFavorite) },
+                        onClick = { onRecipeClick(recipe) }
+                    )
+                }
+            }
         }
     }
-}
 
-@Composable
-fun DietaryFilterRow(
-    selectedTags: Set<String>,
-    onTagSelected: (String) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val dietaryTags = listOf("Vegan", "Vegetarian", "Gluten-Free", "Dairy-Free", "Nut-Free", "Keto", "Paleo")
-    val scrollState = rememberScrollState()
-    Row(
-        modifier = modifier
-            .padding(vertical = 8.dp)
-            .horizontalScroll(scrollState)
+    @Composable
+    fun CategoryFilterRow(
+        selectedCategory: RecipeCategory,
+        onCategorySelected: (RecipeCategory) -> Unit,
+        modifier: Modifier = Modifier
     ) {
-        dietaryTags.forEach { tag ->
-            FilterChip(
-                selected = selectedTags.contains(tag),
-                onClick = { onTagSelected(tag) },
-                modifier = Modifier.padding(horizontal = 4.dp),
-                label = { Text(tag) }
-            )
+        val scrollState = rememberScrollState()
+        Row(
+            modifier = modifier
+                .padding(vertical = 8.dp)
+                .horizontalScroll(scrollState)
+        ) {
+            RecipeCategory.values().forEach { category ->
+                FilterChip(
+                    selected = selectedCategory == category,
+                    onClick = { onCategorySelected(category) },
+                    modifier = Modifier.padding(horizontal = 4.dp),
+                    label = { Text(category.name) }
+                )
+            }
+        }
+    }
+
+    @Composable
+    fun DietaryFilterRow(
+        selectedTags: Set<String>,
+        onTagSelected: (String) -> Unit,
+        modifier: Modifier = Modifier
+    ) {
+        val dietaryTags =
+            listOf("Vegan", "Vegetarian", "Gluten-Free", "Dairy-Free", "Nut-Free", "Keto", "Paleo")
+        val scrollState = rememberScrollState()
+        Row(
+            modifier = modifier
+                .padding(vertical = 8.dp)
+                .horizontalScroll(scrollState)
+        ) {
+            dietaryTags.forEach { tag ->
+                FilterChip(
+                    selected = selectedTags.contains(tag),
+                    onClick = { onTagSelected(tag) },
+                    modifier = Modifier.padding(horizontal = 4.dp),
+                    label = { Text(tag) }
+                )
+            }
         }
     }
 }

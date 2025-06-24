@@ -94,6 +94,7 @@ class AppViewModel(
                 if (isFavorite) {
                     repository.saveRecipeLocally(recipe)
                 } else {
+                    // Change to String ID
                     repository.deleteLocalRecipe(recipe.id)
                 }
             } catch (e: Exception) {
@@ -128,6 +129,7 @@ class AppViewModel(
     fun addToCollection(recipe: Recipe, collectionId: Long) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
+                // Change to String ID
                 repository.addToCollection(recipe.id, collectionId)
                 loadCollections()
             } catch (e: Exception) {
@@ -139,6 +141,7 @@ class AppViewModel(
     fun removeFromCollection(recipe: Recipe, collectionId: Long) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
+                // Change to String ID
                 repository.removeFromCollection(recipe.id, collectionId)
                 loadCollections()
             } catch (e: Exception) {

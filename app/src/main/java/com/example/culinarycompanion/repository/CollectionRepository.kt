@@ -31,13 +31,13 @@ class CollectionRepository(private val collectionDao: CollectionDao,
     }
 
     // Added these methods to match ViewModel requirements
-    suspend fun addToCollection(recipeId: Int, collectionId: Long) {
+    suspend fun addToCollection(recipeId: String, collectionId: Long) {
         withContext(Dispatchers.IO) {
             collectionDao.addToCollection(recipeId, collectionId)
         }
     }
 
-    suspend fun removeFromCollection(recipeId: Int, collectionId: Long) {
+    suspend fun removeFromCollection(recipeId: String, collectionId: Long) {
         withContext(Dispatchers.IO) {
             collectionDao.removeFromCollection(recipeId, collectionId)
         }
@@ -51,7 +51,7 @@ class CollectionRepository(private val collectionDao: CollectionDao,
     }
 
     // Optional: Keep if needed for other features
-    suspend fun getCollectionsContainingRecipe(recipeId: Int): List<RecipeCollection> {
+    suspend fun getCollectionsContainingRecipe(recipeId: String): List<RecipeCollection> {
         return withContext(Dispatchers.IO) {
             collectionDao.getCollectionsContainingRecipe(recipeId)
         }
@@ -77,7 +77,7 @@ class CollectionRepository(private val collectionDao: CollectionDao,
         }
     }
 
-    suspend fun deleteLocalRecipe(recipeId: Int) {
+    suspend fun deleteLocalRecipe(recipeId: String) {
         withContext(Dispatchers.IO) {
             savedRecipeDao.deleteById(recipeId)
         }

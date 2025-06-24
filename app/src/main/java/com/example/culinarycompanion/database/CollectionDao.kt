@@ -14,15 +14,17 @@ interface CollectionDao {
     @Delete
     suspend fun deleteCollection(collection: RecipeCollection)
 
-    @Query("SELECT * FROM recipecollection ORDER BY createdAt DESC")
-    suspend fun getAllCollections(): List<RecipeCollection>
+    // Remove ORDER BY createdAt since it doesn't exist
 
     @Query("SELECT * FROM recipecollection WHERE id = :collectionId")
     suspend fun getCollectionById(collectionId: Long): RecipeCollection?
 
+    @Query("SELECT * FROM recipecollection ORDER BY createdAt DESC")
+    suspend fun getAllCollections(): List<RecipeCollection>
+
     // Transactional methods for safe list operations
     @Transaction
-    suspend fun addToCollection(recipeId: Int, collectionId: Long) {
+    suspend fun addToCollection(recipeId: String, collectionId: Long) {
         val collection = getCollectionById(collectionId) ?: return
         val updatedIds = collection.recipeIds.toMutableList().apply {
             if (!contains(recipeId)) add(recipeId)
@@ -32,7 +34,7 @@ interface CollectionDao {
     }
 
     @Transaction
-    suspend fun removeFromCollection(recipeId: Int, collectionId: Long) {
+    suspend fun removeFromCollection(recipeId: String, collectionId: Long) {
         val collection = getCollectionById(collectionId) ?: return
         val updatedIds = collection.recipeIds.toMutableList().apply {
             remove(recipeId)
@@ -41,10 +43,8 @@ interface CollectionDao {
         updateCollection(collection)
     }
 
-    @Query("SELECT * FROM recipecollection")
-    suspend fun getAllCollectionsRaw(): List<RecipeCollection>
-
-    suspend fun getCollectionsContainingRecipe(recipeId: Int): List<RecipeCollection> {
-        return getAllCollectionsRaw().filter { it.recipeIds.contains(recipeId) }
+    // Fix recipeId type to String
+    suspend fun getCollectionsContainingRecipe(recipeId: String): List<RecipeCollection> {
+        return getAllCollections().filter { it.recipeIds.contains(recipeId) }
     }
 }

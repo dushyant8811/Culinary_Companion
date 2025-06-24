@@ -8,7 +8,7 @@ import com.example.culinarycompanion.database.Converters
 @Entity(tableName = "saved_recipes")
 @TypeConverters(Converters::class)
 data class SavedRecipe(
-    @PrimaryKey val id: Int,
+    @PrimaryKey val id: String,
     val title: String,
     val ingredients: List<String>,
     val instructions: List<String>,

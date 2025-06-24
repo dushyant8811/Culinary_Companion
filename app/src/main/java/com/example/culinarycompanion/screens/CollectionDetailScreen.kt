@@ -5,10 +5,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Folder // Direct import
+import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -22,14 +21,10 @@ import com.example.culinarycompanion.model.RecipeCollection
 fun CollectionDetailScreen(
     navController: NavController,
     collection: RecipeCollection,
-    recipes: List<Recipe>,
+    recipes: List<Recipe>,  // This now contains ONLY the recipes in this collection
     onRecipeClick: (Recipe) -> Unit,
     onRemoveFromCollection: (Recipe) -> Unit
 ) {
-    val collectionRecipes = remember(collection, recipes) {
-        recipes.filter { it.id in collection.recipeIds }
-    }
-
     Scaffold(
         topBar = {
             SmallTopAppBar(
@@ -45,7 +40,7 @@ fun CollectionDetailScreen(
             )
         }
     ) { innerPadding ->
-        if (collectionRecipes.isEmpty()) {
+        if (recipes.isEmpty()) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -54,7 +49,7 @@ fun CollectionDetailScreen(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(
-                        imageVector = Icons.Filled.Folder, // Using directly imported icon
+                        imageVector = Icons.Filled.Folder,
                         contentDescription = "Empty collection",
                         modifier = Modifier.size(64.dp),
                         tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
@@ -78,7 +73,7 @@ fun CollectionDetailScreen(
                     .padding(horizontal = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(collectionRecipes) { recipe ->
+                items(recipes) { recipe ->  // Use the filtered recipes directly
                     RecipeCard(
                         recipe = recipe,
                         modifier = Modifier.fillMaxWidth(),

@@ -10,7 +10,7 @@ import com.example.culinarycompanion.model.RecipeCollection
 
 @Database(
     entities = [RecipeCollection::class, SavedRecipe::class],
-    version = 2, // Incremented version
+    version = 3, // Incremented version
     exportSchema = false
 )
 

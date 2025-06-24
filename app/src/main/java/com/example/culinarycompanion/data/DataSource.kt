@@ -11,7 +11,7 @@ object DataSource {
 
     val recipes = listOf(
         Recipe(
-            id = 1,
+            id = "1",
             title = "Fluffy Pancakes",
             ingredients = listOf(
                 "1 cup all-purpose flour",
@@ -38,7 +38,7 @@ object DataSource {
             imageUrl = "https://images.immediate.co.uk/production/volatile/sites/30/2024/06/FluffyJapanesePancakes-e6d7773.jpg?quality=90&webp=true&resize=375,341"
         ),
         Recipe(
-            id = 2,
+            id = "2",
             title = "Vegetable Stir Fry",
             ingredients = listOf(
                 "2 cups mixed vegetables (bell peppers, broccoli, carrots)",
@@ -66,7 +66,7 @@ object DataSource {
             imageUrl = "https://i2.wp.com/lifemadesimplebakes.com/wp-content/uploads/2021/04/vegetable-stir-fry-resize-15.jpg"
         ),
         Recipe(
-            id = 3,
+            id = "3",
             title = "Chocolate Cake",
             ingredients = listOf(
                 "1 3/4 cups all-purpose flour",
