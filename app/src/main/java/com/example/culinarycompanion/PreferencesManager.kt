@@ -7,5 +7,10 @@ class PreferencesManager(context: Context) {
 
     var isProfileSetupComplete: Boolean
         get() = sharedPreferences.getBoolean("profile_setup_complete", false)
-        set(value) = sharedPreferences.edit { putBoolean("profile_setup_complete", value) }
+        set(value) {
+            sharedPreferences.edit {
+                putBoolean("profile_setup_complete", value)
+                apply() // Ensure immediate write
+            }
+        }
 }

@@ -26,4 +26,13 @@ interface SavedRecipeDao {
 
     @Query("DELETE FROM saved_recipes WHERE id = :recipeId")
     suspend fun deleteById(recipeId: String)
+
+    @Query("DELETE FROM saved_recipes")
+    suspend fun deleteAll()
+
+    @Query("SELECT * FROM saved_recipes WHERE isFavorite = 1")
+    suspend fun getFavoriteRecipes(): List<SavedRecipe>
+
+    @Query("SELECT * FROM saved_recipes WHERE lastUpdated > :timestamp")
+    suspend fun getRecipesUpdatedAfter(timestamp: Long): List<SavedRecipe>
 }

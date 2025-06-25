@@ -6,14 +6,15 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import android.content.Context
 import androidx.room.TypeConverters
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.culinarycompanion.model.RecipeCollection
 
 @Database(
     entities = [RecipeCollection::class, SavedRecipe::class],
-    version = 3, // Incremented version
-    exportSchema = false
+    version = 4,  // Incremented version for new changes
+    exportSchema = true  // Enable schema export for migrations
 )
-
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun collectionDao(): CollectionDao
@@ -30,10 +31,24 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "culinary_db"
                 )
-                    .fallbackToDestructiveMigration()
+                    .addCallback(object : RoomDatabase.Callback() {
+                        override fun onCreate(db: SupportSQLiteDatabase) {
+                            super.onCreate(db)
+                            // Initialize with default collections if needed
+                        }
+                    })
+                    .addMigrations(MIGRATION_3_4)  // Add your migration here
+                    .fallbackToDestructiveMigrationOnDowngrade()
                     .build()
                 INSTANCE = instance
                 instance
+            }
+        }
+
+        // Migration from version 3 to 4
+        private val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // Add any schema changes here
             }
         }
     }

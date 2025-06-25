@@ -32,7 +32,7 @@ fun RecipeDetailScreen(
     navController: NavController,
     collections: List<RecipeCollection>,  // Added collections parameter
     onFavoriteToggle: (Boolean) -> Unit = {},
-    onAddToCollection: (Long) -> Unit = {}
+    onAddToCollection: (String) -> Unit = {}
 ) {
     var showCollectionsDialog by remember { mutableStateOf(false) }
 

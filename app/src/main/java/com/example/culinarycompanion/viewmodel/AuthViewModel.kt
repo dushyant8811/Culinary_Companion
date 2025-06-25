@@ -37,6 +37,7 @@ class AuthViewModel : ViewModel() {
 
     private var googleSignInClient: GoogleSignInClient? = null
 
+
     fun initialize(context: Context) {
         try {
             val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -102,6 +103,12 @@ class AuthViewModel : ViewModel() {
                 Log.e("AuthViewModel", "Profile update failed", e)
                 _errorMessage.value = "Profile update failed: ${e.message}"
             }
+        }
+    }
+
+    fun setErrorMessage(message: String) {
+        viewModelScope.launch {
+            _errorMessage.value = message
         }
     }
 

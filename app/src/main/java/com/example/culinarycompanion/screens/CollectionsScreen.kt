@@ -25,7 +25,8 @@ import com.example.culinarycompanion.model.RecipeCollection
 fun CollectionsScreen(
     navController: NavController,
     collections: List<RecipeCollection>,
-    onCollectionClick: (Long) -> Unit,
+    allRecipes: List<Recipe>,
+    onCollectionClick: (String) -> Unit,
     onDeleteCollection: (RecipeCollection) -> Unit,
     onCreateCollection: () -> Unit
 ) {
@@ -89,11 +90,17 @@ fun CollectionsScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(collections) { collection ->
-                    val recipeCount = recipes.count { it.id in collection.recipeIds }
+                    val recipeCount = allRecipes.count { it.id in collection.recipeIds }
                     CollectionItem(
                         collection = collection,
                         recipeCount = recipeCount,
-                        onCollectionClick = { onCollectionClick(collection.id) },
+                        onCollectionClick = {
+                            if (collection.id.isNotBlank()) {
+                                onCollectionClick(collection.id)
+                            } else {
+                                println("⚠️ Skipped navigation: Blank collection ID")
+                            }
+                        },
                         onDeleteClick = { onDeleteCollection(collection) }
                     )
                 }

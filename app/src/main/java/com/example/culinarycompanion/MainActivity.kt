@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package com.example.culinarycompanion
 
 import PreferencesManager
@@ -43,9 +45,13 @@ import com.example.culinarycompanion.repository.RecipeRepository
 import com.example.culinarycompanion.repository.FirebaseRecipeRepository
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
+import com.google.firebase.FirebaseApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import androidx.compose.runtime.withFrameNanos
+import kotlinx.coroutines.delay
+
 
 class MainActivity : ComponentActivity() {
 
@@ -56,7 +62,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         preferencesManager = PreferencesManager(this)
-
+// Add this before using Firestore
+        FirebaseApp.initializeApp(this)
         // Initialize Firebase Auth
         Firebase.auth.useAppLanguage()
         authViewModel.initialize(this)
@@ -93,6 +100,12 @@ class MainActivity : ComponentActivity() {
                 val currentUser by authViewModel.currentUser.collectAsState()
                 val isLoading by authViewModel.isLoading.collectAsState()
 
+                LaunchedEffect(currentUser) {
+                    if (currentUser != null) {
+                        delay(16) // Let first frame draw
+                        appViewModel.loadData()
+                    }
+                }
                 // Handle auth state with navigation
                 LaunchedEffect(currentUser, isLoading) {
                     when {
@@ -149,6 +162,7 @@ class MainActivity : ComponentActivity() {
                             navController = navController,
                             authViewModel = authViewModel,
                             onProfileComplete = {
+                                preferencesManager.isProfileSetupComplete = true
                                 navController.navigate("recipeList") {
                                     popUpTo("login") { inclusive = true }
                                     launchSingleTop = true
@@ -160,19 +174,29 @@ class MainActivity : ComponentActivity() {
                     composable("recipeList") {
                         val collections by appViewModel.collections.collectAsState(emptyList())
                         val recipes by appViewModel.recipes.collectAsState(emptyList())
+                        val isLoading by appViewModel.isLoading.collectAsState()
 
-                        RecipeApp(
-                            navController = navController,
-                            recipes = recipes,
-                            collections = collections,
-                            onFavoriteToggle = { recipe, isFavorite ->
-                                appViewModel.toggleFavorite(recipe, isFavorite)
-                            },
-                            onAddToCollection = { recipe, collectionId ->
-                                appViewModel.addToCollection(recipe, collectionId)
+                        if (isLoading) {
+                            // Show loading UI while syncing/initializing
+                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                CircularProgressIndicator()
                             }
-                        )
+                        } else {
+                            // Main UI after data is ready
+                            RecipeApp(
+                                navController = navController,
+                                recipes = recipes,
+                                collections = collections,
+                                onFavoriteToggle = { recipe, isFavorite ->
+                                    appViewModel.toggleFavorite(recipe, isFavorite)
+                                },
+                                onAddToCollection = { recipe, collectionId ->
+                                    appViewModel.addToCollection(recipe, collectionId)
+                                }
+                            )
+                        }
                     }
+
 
                     composable("recipeDetail/{recipeId}") { backStackEntry ->
                         val recipeId = backStackEntry.arguments?.getString("recipeId")
@@ -225,10 +249,12 @@ class MainActivity : ComponentActivity() {
 
                     composable("collections") {
                         val collections by appViewModel.collections.collectAsState(emptyList())
+                        val recipes by appViewModel.recipes.collectAsState(emptyList())
 
                         CollectionsScreen(
                             navController = navController,
                             collections = collections,
+                            allRecipes = recipes,
                             onCollectionClick = { collectionId ->
                                 navController.navigate("collectionDetail/$collectionId") {
                                     launchSingleTop = true
@@ -246,7 +272,7 @@ class MainActivity : ComponentActivity() {
                     }
 
                     composable("collectionDetail/{collectionId}") { backStackEntry ->
-                        val collectionId = backStackEntry.arguments?.getString("collectionId")?.toLongOrNull()
+                        val collectionId = backStackEntry.arguments?.getString("collectionId")
                         val collections by appViewModel.collections.collectAsState(emptyList())
                         val collection = collections.find { it.id == collectionId }
 
@@ -347,7 +373,7 @@ class MainActivity : ComponentActivity() {
         recipes: List<Recipe>,
         collections: List<RecipeCollection>,
         onFavoriteToggle: (Recipe, Boolean) -> Unit,
-        onAddToCollection: (Recipe, Long) -> Unit
+        onAddToCollection: (Recipe, String) -> Unit
     ) {
         val searchText = remember { mutableStateOf(TextFieldValue("")) }
         var selectedCategory by remember { mutableStateOf(RecipeCategory.ALL) }

@@ -2,37 +2,63 @@ package com.example.culinarycompanion.model
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
-import androidx.room.TypeConverter
 import androidx.room.TypeConverters
 import com.example.culinarycompanion.database.Converters
+import com.google.firebase.firestore.Exclude
 
-@Entity
+@Entity(
+    tableName = "recipecollection",
+    indices = [
+        Index(value = ["name"], unique = false),
+        Index(value = ["createdAt"], unique = false)
+    ]
+)
 @TypeConverters(Converters::class)
 data class RecipeCollection(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    var name: String,
+    @PrimaryKey
+    val id: String = "",  // Removed autoGenerate = true
+
+    val name: String = "",
+
     @ColumnInfo(name = "createdAt")
-    var createdAt: Long = System.currentTimeMillis(),
-    var recipeIds: List<String> = emptyList()  // Change to String
-)
+    val createdAt: Long = System.currentTimeMillis(),
 
-// database/SavedRecipe.kt
-@Entity(tableName = "saved_recipes")
-@TypeConverters(Converters::class)
-data class SavedRecipe(
-    @PrimaryKey val id: String,  // Change to String
-    // ... other fields ...
-)
+    val recipeIds: List<String> = emptyList(),
 
-// database/Converters.kt
-@TypeConverter
-fun fromStringList(value: String?): List<String> {
-    if (value.isNullOrEmpty()) return emptyList()
-    return value.split(",")
-}
+    @ColumnInfo(defaultValue = "")
+    val ownerId: String = ""
+) {
+    // Firestore document ID (not stored in Room)
+    @Exclude
+    var documentId: String = ""
 
-@TypeConverter
-fun toStringList(list: List<String>?): String {
-    return list?.joinToString(",") ?: ""
+    fun toFirestoreMap(): Map<String, Any> {
+        return mapOf(
+            "name" to name,
+            "createdAt" to createdAt,
+            "recipeIds" to recipeIds,
+            "ownerId" to ownerId
+        )
+    }
+
+    companion object {
+        fun fromFirestore(
+            documentId: String,
+            data: Map<String, Any>
+        ): RecipeCollection {
+            return RecipeCollection(
+                id = documentId, // Set Firestore ID here
+                name = data["name"] as? String ?: "",
+                createdAt = (data["createdAt"] as? Long) ?: System.currentTimeMillis(),
+                recipeIds = data["recipeIds"] as? List<String> ?: emptyList(),
+                ownerId = data["ownerId"] as? String ?: ""
+            ).apply {
+                this.documentId = documentId
+            }
+        }
+    }
+
+    fun containsRecipe(recipeId: String): Boolean = recipeIds.contains(recipeId)
 }
