@@ -8,6 +8,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -88,7 +89,7 @@ class MainActivity : ComponentActivity() {
         val savedRecipeDao = appDatabase.savedRecipeDao()
 
         val collectionRepository = CollectionRepository(collectionDao, savedRecipeDao)
-        val viewModelFactory = AppViewModelFactory(collectionRepository, recipeRepository)
+        val viewModelFactory = AppViewModelFactory(application, collectionRepository, recipeRepository)
 
         appViewModel = ViewModelProvider(this, viewModelFactory)[AppViewModel::class.java]
 
@@ -97,8 +98,9 @@ class MainActivity : ComponentActivity() {
         setContent {
             RecipeBookTheme {
                 val navController = rememberNavController()
+                val authIsLoading by authViewModel.isLoading.collectAsState()
+                val appIsLoading by appViewModel.isLoading.collectAsState()
                 val currentUser by authViewModel.currentUser.collectAsState()
-                val isLoading by authViewModel.isLoading.collectAsState()
 
                 LaunchedEffect(currentUser) {
                     if (currentUser != null) {
@@ -106,43 +108,24 @@ class MainActivity : ComponentActivity() {
                         appViewModel.loadData()
                     }
                 }
-                // Handle auth state with navigation
-                LaunchedEffect(currentUser, isLoading) {
-                    when {
-                        isLoading -> {
-                            if (navController.currentDestination?.route != "loading") {
-                                navController.navigate("loading") {
-                                    launchSingleTop = true
-                                }
-                            }
-                        }
 
-                        currentUser == null -> {
-                            navController.navigate("login") {
-                                popUpTo(0)
-                                launchSingleTop = true
-                            }
-                        }
+                val startDestination = when {
+                    // Show "loading" if auth is working OR if the user is logged in but app data is still syncing.
+                    authIsLoading || (currentUser != null && appIsLoading) -> "loading"
 
-                        !preferencesManager.isProfileSetupComplete -> {
-                            navController.navigate("profileSetup") {
-                                popUpTo(0)
-                                launchSingleTop = true
-                            }
-                        }
+                    // If not loading, check if user is logged out.
+                    currentUser == null -> "login"
 
-                        else -> {
-                            navController.navigate("recipeList") {
-                                popUpTo(0)
-                                launchSingleTop = true
-                            }
-                        }
-                    }
+                    // If user is logged in, check if they need to set up their profile.
+                    !preferencesManager.isProfileSetupComplete -> "profileSetup"
+
+                    // Otherwise, the user is logged in, profile is set up, and data is ready.
+                    else -> "recipeList"
                 }
 
                 NavHost(
                     navController = navController,
-                    startDestination = "loading"
+                    startDestination = startDestination
                 ) {
                     composable("loading") {
                         Box(
@@ -205,16 +188,22 @@ class MainActivity : ComponentActivity() {
 
                         if (recipe != null) {
                             val collections by appViewModel.collections.collectAsState(emptyList())
+                            val downloadedIds by appViewModel.downloadedRecipeIds.collectAsState()
+                            val isDownloaded = downloadedIds.contains(recipe.id)
 
                             RecipeDetailScreen(
                                 recipe = recipe,
                                 navController = navController,
                                 collections = collections,
+                                isDownloaded = isDownloaded,
                                 onFavoriteToggle = { isFavorite ->
                                     appViewModel.toggleFavorite(recipe, isFavorite)
                                 },
                                 onAddToCollection = { collectionId ->
                                     appViewModel.addToCollection(recipe, collectionId)
+                                },
+                                onDownloadClick = {
+                                    appViewModel.toggleDownload(recipe)
                                 }
                             )
                         } else {
@@ -325,12 +314,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == AuthViewModel.RC_SIGN_IN) {
-            authViewModel.handleSignInResult(data)
-        }
-    }
 
     @Composable
     fun AddCollectionDialog(
@@ -381,7 +364,7 @@ class MainActivity : ComponentActivity() {
 
         Scaffold(
             topBar = {
-                SmallTopAppBar(
+                TopAppBar(
                     title = { Text("Culinary Companion") },
                     actions = {
                         IconButton(
@@ -451,6 +434,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    @OptIn(ExperimentalFoundationApi::class)
     @Composable
     fun RecipeList(
         recipes: List<Recipe>,
@@ -496,10 +480,15 @@ class MainActivity : ComponentActivity() {
                 modifier = modifier.padding(horizontal = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(filteredRecipes) { recipe ->
+                items(
+                    items = filteredRecipes,
+                    key = { recipe -> recipe.id } // <-- ADD THIS LINE
+                ) { recipe ->
                     RecipeCard(
                         recipe = recipe,
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .animateItemPlacement(), // <-- Add this for nice animations
                         onFavoriteToggle = { isFavorite -> onFavoriteToggle(recipe, isFavorite) },
                         onClick = { onRecipeClick(recipe) }
                     )

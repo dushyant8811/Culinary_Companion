@@ -8,17 +8,23 @@ import com.example.culinarycompanion.model.RecipeCollection
 import com.example.culinarycompanion.repository.CollectionRepository
 import com.example.culinarycompanion.repository.RecipeRepository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
+import com.example.culinarycompanion.util.ConnectivityUtil
 
 class AppViewModel(
+    application: Application,
     private val repository: CollectionRepository,
     private val recipeRepository: RecipeRepository
-) : ViewModel() {
+) : AndroidViewModel(application) {
 
     private val _recipes = MutableStateFlow<List<Recipe>>(emptyList())
     val recipes: StateFlow<List<Recipe>> = _recipes.asStateFlow()
@@ -35,8 +41,12 @@ class AppViewModel(
     private val _syncStatus = MutableStateFlow<SyncStatus>(SyncStatus.IDLE)
     val syncStatus: StateFlow<SyncStatus> = _syncStatus.asStateFlow()
 
+    private val _downloadedRecipeIds = MutableStateFlow<Set<String>>(emptySet())
+    val downloadedRecipeIds: StateFlow<Set<String>> = _downloadedRecipeIds.asStateFlow()
+
     init {
-        loadData()
+        // Load the set of downloaded IDs when the ViewModel is created
+        loadDownloadedIds()
     }
 
     sealed class SyncStatus {
@@ -50,23 +60,60 @@ class AppViewModel(
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
-            _syncStatus.value = SyncStatus.SYNCING
 
+            val context = getApplication<Application>().applicationContext
+            if (ConnectivityUtil.isOnline(context)) {
+                // --- ONLINE PATH ---
+                Log.d("AppViewModel", "Device is ONLINE. Fetching from cloud.")
+                try {
+                    val recipesJob = async { loadRecipes() } // loadRecipes fetches from Firestore
+                    val collectionsJob = async { loadCollections() }
+                    awaitAll(recipesJob, collectionsJob)
+                } catch (e: Exception) {
+                    _error.value = "Error fetching cloud data: ${e.message}"
+                }
+            } else {
+                // --- OFFLINE PATH ---
+                Log.d("AppViewModel", "Device is OFFLINE. Loading from local database.")
+                try {
+                    val localRecipes = repository.getDownloadedRecipes()
+                    _recipes.value = localRecipes
+                    // Optionally, load collections from local cache too
+                    _collections.value = repository.getAllCollections()
+                } catch (e: Exception) {
+                    _error.value = "Error loading offline data: ${e.message}"
+                }
+            }
+            _isLoading.value = false
+        }
+    }
+
+    private fun loadDownloadedIds() {
+        viewModelScope.launch {
+            _downloadedRecipeIds.value = repository.getDownloadedRecipeIds().toSet()
+        }
+    }
+
+    fun toggleDownload(recipe: Recipe) {
+        viewModelScope.launch {
+            val isCurrentlyDownloaded = _downloadedRecipeIds.value.contains(recipe.id)
             try {
-                // Load in sequence to ensure proper sync
-                syncRecipes()
-                loadRecipes()
-                syncCollections()
-                loadCollections()
-
-                _syncStatus.value = SyncStatus.SYNC_COMPLETE
+                if (isCurrentlyDownloaded) {
+                    // --- UN-DOWNLOAD ---
+                    repository.removeRecipeFromOffline(recipe.id)
+                    // Optimistic UI update
+                    _downloadedRecipeIds.update { it - recipe.id }
+                    Log.d("AppViewModel", "Removed ${recipe.title} from offline cache.")
+                } else {
+                    // --- DOWNLOAD ---
+                    repository.saveRecipeForOffline(recipe)
+                    // Optimistic UI update
+                    _downloadedRecipeIds.update { it + recipe.id }
+                    Log.d("AppViewModel", "Saved ${recipe.title} for offline.")
+                }
             } catch (e: Exception) {
-                val errorMsg = "Failed to load data: ${e.message ?: "Unknown error"}"
-                _error.value = errorMsg
-                _syncStatus.value = SyncStatus.SYNC_ERROR(errorMsg)
-                Log.e("AppViewModel", "Data loading error", e)
-            } finally {
-                _isLoading.value = false
+                _error.value = "Failed to update offline status: ${e.message}"
+                // TODO: Revert optimistic update on failure
             }
         }
     }

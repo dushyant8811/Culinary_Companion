@@ -37,9 +37,11 @@ fun SearchBar(
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         },
-        colors = TextFieldDefaults.textFieldColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            unfocusedIndicatorColor = MaterialTheme.colorScheme.outline
+        colors = TextFieldDefaults.colors(
+            focusedContainerColor = MaterialTheme.colorScheme.surface,
+            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+            disabledContainerColor = MaterialTheme.colorScheme.surface,
+            unfocusedIndicatorColor = MaterialTheme.colorScheme.outline,
         ),
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
         keyboardActions = KeyboardActions(

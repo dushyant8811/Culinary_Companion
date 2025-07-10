@@ -1,5 +1,6 @@
 package com.example.culinarycompanion.screens
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -16,7 +17,7 @@ import com.example.culinarycompanion.components.RecipeCard
 import com.example.culinarycompanion.model.Recipe
 import com.example.culinarycompanion.model.RecipeCollection
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun CollectionDetailScreen(
     navController: NavController,
@@ -27,7 +28,7 @@ fun CollectionDetailScreen(
 ) {
     Scaffold(
         topBar = {
-            SmallTopAppBar(
+            TopAppBar(
                 title = { Text(collection.name) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
@@ -73,10 +74,15 @@ fun CollectionDetailScreen(
                     .padding(horizontal = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(recipes) { recipe ->  // Use the filtered recipes directly
+                items(
+                    items = recipes,
+                    key = { recipe -> recipe.id } // <-- 1. Add key
+                ) { recipe ->
                     RecipeCard(
                         recipe = recipe,
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .animateItemPlacement(), // <-- 2. Add animation
                         onClick = { onRecipeClick(recipe) }
                     )
                 }

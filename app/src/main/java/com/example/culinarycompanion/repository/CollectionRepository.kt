@@ -263,6 +263,32 @@ class CollectionRepository(
         }
     }
 
+    suspend fun saveRecipeForOffline(recipe: Recipe) {
+        withContext(Dispatchers.IO) {
+            savedRecipeDao.insert(SavedRecipe.fromRecipe(recipe))
+        }
+    }
+
+    suspend fun removeRecipeFromOffline(recipeId: String) {
+        withContext(Dispatchers.IO) {
+            // Note: This will also remove it from favorites if it was a favorite.
+            // A more advanced implementation might have separate tables. For now, this is ok.
+            savedRecipeDao.deleteById(recipeId)
+        }
+    }
+
+    suspend fun getDownloadedRecipes(): List<Recipe> {
+        return withContext(Dispatchers.IO) {
+            savedRecipeDao.getAllSavedRecipes().map { it.toRecipe() }
+        }
+    }
+
+    suspend fun getDownloadedRecipeIds(): List<String> {
+        return withContext(Dispatchers.IO) {
+            savedRecipeDao.getAllSavedRecipes().map { it.id }
+        }
+    }
+
     private fun Recipe.toFirestoreMap(): Map<String, Any?> {
         return mapOf(
             "id" to id,

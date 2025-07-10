@@ -11,6 +11,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.Favorite
+import androidx.compose.material.icons.outlined.FileDownload
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -30,15 +31,17 @@ import com.example.culinarycompanion.model.RecipeCollection
 fun RecipeDetailScreen(
     recipe: Recipe,
     navController: NavController,
-    collections: List<RecipeCollection>,  // Added collections parameter
+    collections: List<RecipeCollection>,
+    isDownloaded: Boolean,
     onFavoriteToggle: (Boolean) -> Unit = {},
-    onAddToCollection: (String) -> Unit = {}
+    onAddToCollection: (String) -> Unit = {},
+    onDownloadClick: () -> Unit
 ) {
     var showCollectionsDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
-            SmallTopAppBar(
+            TopAppBar(
                 title = { Text(recipe.title) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
@@ -46,6 +49,15 @@ fun RecipeDetailScreen(
                     }
                 },
                 actions = {
+
+                    IconButton(onClick = onDownloadClick) {
+                        Icon(
+                            imageVector = if (isDownloaded) Icons.Filled.DownloadDone else Icons.Outlined.FileDownload,
+                            contentDescription = "Download Recipe",
+                            tint = if (recipe.isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+
                     IconButton(onClick = { onFavoriteToggle(!recipe.isFavorite) }) {
                         Icon(
                             imageVector = if (recipe.isFavorite) Icons.Filled.Favorite else Icons.Outlined.Favorite,

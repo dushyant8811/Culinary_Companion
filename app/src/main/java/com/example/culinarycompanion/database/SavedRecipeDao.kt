@@ -1,3 +1,5 @@
+// In database/SavedRecipeDao.kt
+
 package com.example.culinarycompanion.database
 
 import androidx.room.Dao
@@ -9,6 +11,7 @@ import androidx.room.Update
 
 @Dao
 interface SavedRecipeDao {
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(recipe: SavedRecipe)
 
@@ -35,4 +38,5 @@ interface SavedRecipeDao {
 
     @Query("SELECT * FROM saved_recipes WHERE lastUpdated > :timestamp")
     suspend fun getRecipesUpdatedAfter(timestamp: Long): List<SavedRecipe>
+
 }

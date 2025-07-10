@@ -1,5 +1,6 @@
 package com.example.culinarycompanion.screens
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -17,7 +18,7 @@ import androidx.navigation.NavController
 import com.example.culinarycompanion.components.RecipeCard
 import com.example.culinarycompanion.model.Recipe
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun FavoritesScreen(
     navController: NavController,
@@ -31,7 +32,7 @@ fun FavoritesScreen(
 
     Scaffold(
         topBar = {
-            SmallTopAppBar(
+            TopAppBar(
                 title = { Text("Favorite Recipes") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
@@ -77,15 +78,20 @@ fun FavoritesScreen(
                     .padding(horizontal = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(favoriteRecipes) { recipe ->
+                items(
+                    items = favoriteRecipes,
+                    key = { recipe -> recipe.id } // <-- 1. Add key
+                ) { recipe ->
                     RecipeCard(
                         recipe = recipe,
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .animateItemPlacement(), // <-- 2. Add animation
                         onFavoriteToggle = { isFavorite ->
                             onFavoriteToggle(recipe, isFavorite)
                         },
                         onClick = {
-                            onRecipeClick(recipe) // Call the passed handler
+                            onRecipeClick(recipe)
                         }
                     )
                 }
