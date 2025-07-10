@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material3.*
@@ -81,6 +82,9 @@ class MainActivity : ComponentActivity() {
                 return firebaseRepo.getRecipeById(id)
             }
 
+            override suspend fun addRecipe(recipe: Recipe): String {
+                return firebaseRepo.addRecipe(recipe)
+            }
         }
 
         // Initialize database and repository
@@ -309,6 +313,13 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                     }
+
+                    composable("createRecipe") {
+                        CreateRecipeScreen(
+                            navController = navController,
+                            viewModel = appViewModel
+                        )
+                    }
                 }
             }
         }
@@ -389,6 +400,11 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 )
+            },
+            floatingActionButton = {
+                FloatingActionButton(onClick = { navController.navigate("createRecipe") }) {
+                    Icon(Icons.Filled.Add, contentDescription = "Add Recipe")
+                }
             }
         ) { innerPadding ->
             Column(

@@ -94,6 +94,16 @@ fun RecipeDetailScreen(
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
+            Text(
+                text = "By ${recipe.author}",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp)
+            )
+
             // Basic Information
             Row(
                 modifier = Modifier

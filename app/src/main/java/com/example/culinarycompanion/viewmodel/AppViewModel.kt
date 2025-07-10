@@ -19,6 +19,8 @@ import kotlinx.coroutines.withContext
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import com.example.culinarycompanion.util.ConnectivityUtil
+import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
 
 class AppViewModel(
     application: Application,
@@ -268,5 +270,55 @@ class AppViewModel(
 
     fun refreshData() {
         loadData()
+    }
+
+    fun createRecipe(
+        title: String,
+        ingredients: List<String>,
+        instructions: List<String>,
+        prepTime: Int,
+        cookTime: Int,
+        servings: Int,
+        dietaryTags: List<String>,
+        category: String
+    ) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+
+                val currentUser = Firebase.auth.currentUser
+                val authorName = currentUser?.displayName ?: "Anonymous User"
+
+                val newRecipe = Recipe(
+                    title = title,
+                    ingredients = ingredients.filter { it.isNotBlank() },
+                    instructions = instructions.filter { it.isNotBlank() },
+                    prepTime = prepTime,
+                    cookTime = cookTime,
+                    servings = servings,
+                    category = category,
+                    dietaryTags = dietaryTags,
+                    imageUrl = null,
+                    author = authorName,
+                    isFavorite = false,
+                    createdAt = System.currentTimeMillis(),
+                    updatedAt = System.currentTimeMillis()
+                )
+
+                val newId = recipeRepository.addRecipe(newRecipe)
+                val finalRecipe = newRecipe.copy(id = newId)
+
+                _recipes.update { currentList ->
+                    listOf(finalRecipe) + currentList
+                }
+                Log.d("AppViewModel", "Successfully created recipe: $title")
+
+            } catch (e: Exception) {
+                _error.value = "Failed to create recipe: ${e.message}"
+                Log.e("AppViewModel", "Recipe creation failed", e)
+            } finally {
+                _isLoading.value = false
+            }
+        }
     }
 }

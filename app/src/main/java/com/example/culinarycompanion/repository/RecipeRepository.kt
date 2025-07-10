@@ -11,4 +11,5 @@ import kotlinx.coroutines.withContext
 interface RecipeRepository {
     suspend fun getAllRecipes(): List<Recipe>
     suspend fun getRecipeById(id: String): Recipe?
+    suspend fun addRecipe(recipe: Recipe): String
 }

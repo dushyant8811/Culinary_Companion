@@ -66,6 +66,10 @@ data class Recipe(
     @set:PropertyName("updatedAt")
     var updatedAt: Long = System.currentTimeMillis(),
 
+    @get:PropertyName("author")
+    @set:PropertyName("author")
+    var author: String = "Culinary Companion"
+
 ) {
     // Excluded from Firestore (computed property)
     @Exclude
@@ -92,7 +96,8 @@ data class Recipe(
             "imageUrl" to imageUrl,
             "isFavorite" to isFavorite,
             "createdAt" to createdAt,
-            "updatedAt" to updatedAt
+            "updatedAt" to updatedAt,
+            "author" to author
         )
     }
 
@@ -112,7 +117,8 @@ data class Recipe(
                 imageUrl = map["imageUrl"] as? String,
                 isFavorite = map["isFavorite"] as? Boolean ?: false,
                 createdAt = map["createdAt"] as? Long ?: System.currentTimeMillis(),
-                updatedAt = map["updatedAt"] as? Long ?: System.currentTimeMillis()
+                updatedAt = map["updatedAt"] as? Long ?: System.currentTimeMillis(),
+                author = map["author"] as? String ?: "Culinary Companion"
             )
         }
     }

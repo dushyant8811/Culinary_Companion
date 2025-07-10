@@ -51,6 +51,11 @@ fun RecipeCard(
                     style = MaterialTheme.typography.headlineSmall,
                     color = MaterialTheme.colorScheme.onSurface
                 )
+                Text(
+                    text = "by ${recipe.author}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = "Category: ${recipe.getCategoryDisplayName()}",
