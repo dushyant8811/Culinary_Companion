@@ -18,6 +18,15 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.culinarycompanion.model.RecipeCategory
 import com.example.culinarycompanion.viewmodel.AppViewModel
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.ui.platform.LocalContext
+import android.net.Uri
+import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.text.TextRecognition
+import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,10 +42,43 @@ fun CreateRecipeScreen(
     var servings by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf(RecipeCategory.DINNER) }
     val selectedTags = remember { mutableStateListOf<String>() }
+    val isFormValid = remember(title) { title.isNotBlank() }
 
-    val isFormValid = remember(title) {
-        title.isNotBlank()
-    }
+    val context = LocalContext.current
+    val textRecognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+
+    val ocrLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent(),
+        onResult = { uri: Uri? ->
+            if (uri != null) {
+                try {
+                    val image = InputImage.fromFilePath(context, uri)
+                    textRecognizer.process(image)
+                        .addOnSuccessListener { visionText ->
+                            val fullText = visionText.text
+                            Log.d("OCR", "Full text found: $fullText")
+
+                            val parsedResult = parseRecipeText(fullText)
+
+                            title = parsedResult.title
+
+                            ingredients.clear()
+                            ingredients.addAll(parsedResult.ingredients)
+                            if (ingredients.isEmpty()) ingredients.add("")
+
+                            instructions.clear()
+                            instructions.addAll(parsedResult.instructions)
+                            if (instructions.isEmpty()) instructions.add("")
+                        }
+                        .addOnFailureListener { e ->
+                            Log.e("OCR", "Text recognition failed", e)
+                        }
+                } catch (e: Exception) {
+                    Log.e("OCR", "Failed to load image for OCR", e)
+                }
+            }
+        }
+    )
 
     Scaffold(
         topBar = {
@@ -45,6 +87,14 @@ fun CreateRecipeScreen(
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { ocrLauncher.launch("image/*") }) {
+                        Icon(
+                            imageVector = Icons.Default.CameraAlt,
+                            contentDescription = "Scan Recipe with Camera"
+                        )
                     }
                 }
             )
@@ -261,4 +311,51 @@ private fun DietaryTagsSelector(
             )
         }
     }
+}
+
+data class ParsedRecipe(
+    val title: String,
+    val ingredients: List<String>,
+    val instructions: List<String>
+)
+
+fun parseRecipeText(text: String): ParsedRecipe {
+    val lines = text.lines().filter { it.isNotBlank() }
+
+    var title = lines.firstOrNull() ?: ""
+
+    val ingredients = mutableListOf<String>()
+    val instructions = mutableListOf<String>()
+
+    var isIngredientsSection = false
+    var isInstructionsSection = false
+
+    for (line in lines.drop(1)) {
+        val lowerLine = line.trim().lowercase()
+
+        if (lowerLine.contains("ingredient")) {
+            isIngredientsSection = true
+            isInstructionsSection = false
+            continue
+        }
+        if (lowerLine.contains("instruction") || lowerLine.contains("direction") || lowerLine.contains("method")) {
+            isInstructionsSection = true
+            isIngredientsSection = false
+            continue
+        }
+
+        if (isIngredientsSection) {
+            ingredients.add(line.trim())
+        } else if (isInstructionsSection) {
+            instructions.add(line.trim())
+        }
+    }
+
+    if (ingredients.isEmpty() && instructions.isEmpty()) {
+        val splitPoint = (lines.size * 0.25).toInt()
+        ingredients.addAll(lines.drop(1).take(splitPoint))
+        instructions.addAll(lines.drop(1 + splitPoint))
+    }
+
+    return ParsedRecipe(title, ingredients, instructions)
 }
