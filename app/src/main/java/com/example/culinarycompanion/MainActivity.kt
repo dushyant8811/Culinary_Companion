@@ -197,6 +197,7 @@ class MainActivity : ComponentActivity() {
 
                             RecipeDetailScreen(
                                 recipe = recipe,
+                                viewModel = appViewModel,
                                 navController = navController,
                                 collections = collections,
                                 isDownloaded = isDownloaded,

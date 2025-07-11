@@ -21,6 +21,9 @@ import androidx.lifecycle.AndroidViewModel
 import com.example.culinarycompanion.util.ConnectivityUtil
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
+import com.example.culinarycompanion.util.TtsHelper
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
 
 class AppViewModel(
     application: Application,
@@ -46,8 +49,18 @@ class AppViewModel(
     private val _downloadedRecipeIds = MutableStateFlow<Set<String>>(emptySet())
     val downloadedRecipeIds: StateFlow<Set<String>> = _downloadedRecipeIds.asStateFlow()
 
+    private val ttsHelper = TtsHelper(application)
+
+    private val _isReadingAloud = MutableStateFlow(false)
+    val isReadingAloud: StateFlow<Boolean> = _isReadingAloud.asStateFlow()
+
+    private val _currentInstructionIndex = MutableStateFlow(0)
+    val currentInstructionIndex: StateFlow<Int> = _currentInstructionIndex.asStateFlow()
+
+    private val _currentRecipeForReading = MutableStateFlow<Recipe?>(null)
+    val currentRecipeForReading: StateFlow<Recipe?> = _currentRecipeForReading.asStateFlow()
+
     init {
-        // Load the set of downloaded IDs when the ViewModel is created
         loadDownloadedIds()
     }
 
@@ -320,5 +333,55 @@ class AppViewModel(
                 _isLoading.value = false
             }
         }
+    }
+
+    fun startReading(recipe: Recipe) {
+        _currentRecipeForReading.value = recipe
+        _isReadingAloud.value = true
+        _currentInstructionIndex.value = 0
+        readCurrentStep()
+    }
+
+    fun stopReading() {
+        _isReadingAloud.value = false
+        _currentRecipeForReading.value = null
+    }
+
+    fun nextStep() {
+        val recipe = _currentRecipeForReading.value ?: return
+        if (_currentInstructionIndex.value < recipe.instructions.size - 1) {
+            _currentInstructionIndex.update { it + 1 }
+            readCurrentStep()
+        } else {
+            ttsHelper.speak("You have reached the final step. Well done!")
+        }
+    }
+
+    fun previousStep() {
+        if (_currentInstructionIndex.value > 0) {
+            _currentInstructionIndex.update { it - 1 }
+            readCurrentStep()
+        }
+    }
+
+    fun repeatStep() {
+        readCurrentStep()
+    }
+
+    private fun readCurrentStep() {
+        viewModelScope.launch {
+            ttsHelper.isInitialized.first { it }
+
+            val recipe = _currentRecipeForReading.value
+            val index = _currentInstructionIndex.value
+            recipe?.instructions?.getOrNull(index)?.let { instruction ->
+                ttsHelper.speak("Step ${index + 1}: $instruction")
+            }
+        }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        ttsHelper.stop()
     }
 }
