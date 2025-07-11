@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import android.app.Application
+import android.content.ComponentName
 import androidx.lifecycle.AndroidViewModel
 import com.example.culinarycompanion.util.ConnectivityUtil
 import com.google.firebase.Firebase
@@ -24,6 +25,15 @@ import com.google.firebase.auth.auth
 import com.example.culinarycompanion.util.TtsHelper
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
+import android.content.Intent
+import android.os.Bundle
+import android.speech.RecognitionListener
+import android.speech.RecognizerIntent
+import android.speech.SpeechRecognizer
+import kotlinx.coroutines.delay
+import java.util.Locale
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 
 class AppViewModel(
     application: Application,
@@ -60,8 +70,17 @@ class AppViewModel(
     private val _currentRecipeForReading = MutableStateFlow<Recipe?>(null)
     val currentRecipeForReading: StateFlow<Recipe?> = _currentRecipeForReading.asStateFlow()
 
+    private val _listenNowEvent = MutableSharedFlow<Unit>()
+    val listenNowEvent = _listenNowEvent.asSharedFlow()
+
     init {
         loadDownloadedIds()
+        ttsHelper.onSpeechDone = {
+            // When TTS is done, emit an event to tell the UI to start listening.
+            viewModelScope.launch {
+                _listenNowEvent.emit(Unit)
+            }
+        }
     }
 
     sealed class SyncStatus {
@@ -368,15 +387,35 @@ class AppViewModel(
         readCurrentStep()
     }
 
+
+
     private fun readCurrentStep() {
         viewModelScope.launch {
             ttsHelper.isInitialized.first { it }
-
             val recipe = _currentRecipeForReading.value
             val index = _currentInstructionIndex.value
             recipe?.instructions?.getOrNull(index)?.let { instruction ->
+                // This will now trigger the onSpeechDone callback when finished
                 ttsHelper.speak("Step ${index + 1}: $instruction")
             }
+        }
+    }
+
+    private fun handleCommand(command: String) {
+        Log.d("VoiceCommand", "Received command: $command")
+        when {
+            command.contains("next") -> nextStep()
+            command.contains("previous") || command.contains("back") -> previousStep()
+            command.contains("repeat") -> repeatStep()
+            command.contains("stop") -> stopReading()
+        }
+    }
+
+    fun processVoiceCommandResult(data: Intent?) {
+        val matches = data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+        if (!matches.isNullOrEmpty()) {
+            val command = matches[0].lowercase(Locale.getDefault())
+            handleCommand(command)
         }
     }
 
@@ -384,4 +423,6 @@ class AppViewModel(
         super.onCleared()
         ttsHelper.stop()
     }
+
+
 }
