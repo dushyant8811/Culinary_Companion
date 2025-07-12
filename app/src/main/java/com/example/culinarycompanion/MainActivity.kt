@@ -18,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.People
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -53,6 +54,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.withFrameNanos
 import com.example.culinarycompanion.model.Review
+import com.example.culinarycompanion.repository.CommunityRepository
+import com.example.culinarycompanion.viewmodel.CommunityViewModel
+import com.example.culinarycompanion.viewmodel.CommunityViewModelFactory
 import kotlinx.coroutines.delay
 
 
@@ -60,6 +64,7 @@ class MainActivity : ComponentActivity() {
 
     private val authViewModel: AuthViewModel by viewModels()
     private lateinit var appViewModel: AppViewModel
+    private lateinit var communityViewModel: CommunityViewModel
     private lateinit var preferencesManager: PreferencesManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -92,6 +97,10 @@ class MainActivity : ComponentActivity() {
                 firebaseRepo.submitReview(review)
             }
         }
+
+        val communityRepository = CommunityRepository(applicationContext)
+        val communityViewModelFactory = CommunityViewModelFactory(communityRepository)
+        communityViewModel = ViewModelProvider(this, communityViewModelFactory)[CommunityViewModel::class.java]
 
         // Initialize database and repository
         val appDatabase = AppDatabase.getDatabase(applicationContext)
@@ -310,6 +319,40 @@ class MainActivity : ComponentActivity() {
                             viewModel = appViewModel
                         )
                     }
+
+                    composable("createRecipe") {
+                        CreateRecipeScreen(
+                            navController = navController,
+                            viewModel = appViewModel
+                        )
+                    }
+
+                    // --- ADD THE TWO NEW ROUTES FOR THE COMMUNITY FEATURE HERE ---
+
+                    composable("communityFeed") {
+                        CommunityFeedScreen(
+                            navController = navController,
+                            viewModel = communityViewModel // Use the instance we created in onCreate
+                        )
+                    }
+
+                    composable("createPost") {
+                        CreatePostScreen(
+                            navController = navController,
+                            viewModel = communityViewModel // Pass the same instance
+                        )
+                    }
+
+                    composable("postDetail/{postId}") { backStackEntry ->
+                        val postId = backStackEntry.arguments?.getString("postId")
+                        if (postId != null) {
+                            PostDetailScreen(
+                                navController = navController,
+                                viewModel = communityViewModel,
+                                postId = postId
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -368,6 +411,16 @@ class MainActivity : ComponentActivity() {
                 TopAppBar(
                     title = { Text("Culinary Companion") },
                     actions = {
+
+                        IconButton(
+                            onClick = {
+                                navController.navigate("communityFeed") {
+                                    launchSingleTop = true
+                                }
+                            }
+                        ) {
+                            Icon(Icons.Filled.People, contentDescription = "Community Feed")
+                        }
                         IconButton(
                             onClick = {
                                 navController.navigate("favorites") {
