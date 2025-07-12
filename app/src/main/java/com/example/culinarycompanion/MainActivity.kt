@@ -52,6 +52,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.withFrameNanos
+import com.example.culinarycompanion.model.Review
 import kotlinx.coroutines.delay
 
 
@@ -64,13 +65,11 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         preferencesManager = PreferencesManager(this)
-// Add this before using Firestore
+
         FirebaseApp.initializeApp(this)
-        // Initialize Firebase Auth
         Firebase.auth.useAppLanguage()
         authViewModel.initialize(this)
 
-        // Use Firebase repository directly
         val firebaseRepo = FirebaseRecipeRepository()
 
         val recipeRepository = object : RecipeRepository {
@@ -84,6 +83,13 @@ class MainActivity : ComponentActivity() {
 
             override suspend fun addRecipe(recipe: Recipe): String {
                 return firebaseRepo.addRecipe(recipe)
+            }
+
+            override suspend fun getReviewsForRecipe(recipeId: String): List<Review> {
+                return firebaseRepo.getReviewsForRecipe(recipeId)
+            }
+            override suspend fun submitReview(review: Review) {
+                firebaseRepo.submitReview(review)
             }
         }
 
@@ -164,12 +170,12 @@ class MainActivity : ComponentActivity() {
                         val isLoading by appViewModel.isLoading.collectAsState()
 
                         if (isLoading) {
-                            // Show loading UI while syncing/initializing
+
                             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                                 CircularProgressIndicator()
                             }
                         } else {
-                            // Main UI after data is ready
+
                             RecipeApp(
                                 navController = navController,
                                 recipes = recipes,
@@ -191,26 +197,13 @@ class MainActivity : ComponentActivity() {
                         val recipe = recipes.find { it.id == recipeId }
 
                         if (recipe != null) {
-                            val collections by appViewModel.collections.collectAsState(emptyList())
-                            val downloadedIds by appViewModel.downloadedRecipeIds.collectAsState()
-                            val isDownloaded = downloadedIds.contains(recipe.id)
 
                             RecipeDetailScreen(
                                 recipe = recipe,
                                 viewModel = appViewModel,
-                                navController = navController,
-                                collections = collections,
-                                isDownloaded = isDownloaded,
-                                onFavoriteToggle = { isFavorite ->
-                                    appViewModel.toggleFavorite(recipe, isFavorite)
-                                },
-                                onAddToCollection = { collectionId ->
-                                    appViewModel.addToCollection(recipe, collectionId)
-                                },
-                                onDownloadClick = {
-                                    appViewModel.toggleDownload(recipe)
-                                }
+                                navController = navController
                             )
+
                         } else {
                             Box(
                                 modifier = Modifier.fillMaxSize(),
@@ -278,16 +271,12 @@ class MainActivity : ComponentActivity() {
 
                             CollectionDetailScreen(
                                 navController = navController,
+                                viewModel = appViewModel,
                                 collection = collection,
-                                recipes = collectionRecipes,
-                                onRecipeClick = { recipe ->
-                                    navController.navigate("recipeDetail/${recipe.id}")
-                                },
-                                onRemoveFromCollection = { recipe ->
-                                    appViewModel.removeFromCollection(recipe, collection.id)
-                                }
+                                recipes = collectionRecipes
                             )
-                        } else {
+                        }
+                        else {
                             Box(
                                 modifier = Modifier.fillMaxSize(),
                                 contentAlignment = Alignment.Center
@@ -499,13 +488,13 @@ class MainActivity : ComponentActivity() {
             ) {
                 items(
                     items = filteredRecipes,
-                    key = { recipe -> recipe.id } // <-- ADD THIS LINE
+                    key = { recipe -> recipe.id }
                 ) { recipe ->
                     RecipeCard(
                         recipe = recipe,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .animateItemPlacement(), // <-- Add this for nice animations
+                            .animateItemPlacement(),
                         onFavoriteToggle = { isFavorite -> onFavoriteToggle(recipe, isFavorite) },
                         onClick = { onRecipeClick(recipe) }
                     )

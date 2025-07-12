@@ -52,8 +52,6 @@ fun CollectionItem(
                     overflow = TextOverflow.Ellipsis
                 )
 
-                // Removed description since it doesn't exist in RecipeCollection
-                // Added creation date instead
                 Text(
                     text = "Created: ${java.time.Instant.ofEpochMilli(collection.createdAt)}",
                     style = MaterialTheme.typography.bodyMedium,

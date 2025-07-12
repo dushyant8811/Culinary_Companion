@@ -63,8 +63,6 @@ class CollectionRepository(
         }
     }
 
-
-    // In CollectionRepository.kt, modify the createCollection function
     suspend fun createCollection(name: String): String {
         return withContext(Dispatchers.IO) {
             try {
@@ -79,7 +77,6 @@ class CollectionRepository(
                     .add(collectionData)
                     .await()
 
-                // Use the actual Firestore document ID
                 val collectionId = docRef.id
                 val collection = RecipeCollection(
                     id = collectionId,
@@ -244,7 +241,6 @@ class CollectionRepository(
                 Log.d("CollectionRepo", "Successfully synced favorites")
             } catch (e: Exception) {
                 Log.e("CollectionRepo", "Error syncing favorites", e)
-                // Consider rethrowing the exception to handle it in the caller
                 throw e
             }
         }
@@ -271,8 +267,6 @@ class CollectionRepository(
 
     suspend fun removeRecipeFromOffline(recipeId: String) {
         withContext(Dispatchers.IO) {
-            // Note: This will also remove it from favorites if it was a favorite.
-            // A more advanced implementation might have separate tables. For now, this is ok.
             savedRecipeDao.deleteById(recipeId)
         }
     }
@@ -301,7 +295,7 @@ class CollectionRepository(
             "category" to category,
             "dietaryTags" to dietaryTags,
             "imageUrl" to imageUrl,
-            "isFavorite" to true // Always true when saved as favorite
+            "isFavorite" to true
         )
     }
 

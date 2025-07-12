@@ -18,7 +18,7 @@ import com.google.firebase.firestore.Exclude
 @TypeConverters(Converters::class)
 data class RecipeCollection(
     @PrimaryKey
-    val id: String = "",  // Removed autoGenerate = true
+    val id: String = "",
 
     val name: String = "",
 
@@ -30,7 +30,6 @@ data class RecipeCollection(
     @ColumnInfo(defaultValue = "")
     val ownerId: String = ""
 ) {
-    // Firestore document ID (not stored in Room)
     @Exclude
     var documentId: String = ""
 
@@ -49,7 +48,7 @@ data class RecipeCollection(
             data: Map<String, Any>
         ): RecipeCollection {
             return RecipeCollection(
-                id = documentId, // Set Firestore ID here
+                id = documentId,
                 name = data["name"] as? String ?: "",
                 createdAt = (data["createdAt"] as? Long) ?: System.currentTimeMillis(),
                 recipeIds = data["recipeIds"] as? List<String> ?: emptyList(),

@@ -24,7 +24,7 @@ fun FavoritesScreen(
     navController: NavController,
     recipes: List<Recipe>,
     onFavoriteToggle: (Recipe, Boolean) -> Unit,
-    onRecipeClick: (Recipe) -> Unit // Added this parameter
+    onRecipeClick: (Recipe) -> Unit
 ) {
     val favoriteRecipes = remember(recipes) {
         recipes.filter { it.isFavorite }
@@ -37,7 +37,7 @@ fun FavoritesScreen(
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
-                            imageVector = Icons.Filled.ArrowBack, // Fixed icon reference
+                            imageVector = Icons.Filled.ArrowBack,
                             contentDescription = "Back"
                         )
                     }
@@ -54,7 +54,7 @@ fun FavoritesScreen(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(
-                        imageVector = Icons.Filled.Favorite, // Using filled favorite icon
+                        imageVector = Icons.Filled.Favorite,
                         contentDescription = "No favorites",
                         modifier = Modifier.size(64.dp),
                         tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
@@ -80,13 +80,13 @@ fun FavoritesScreen(
             ) {
                 items(
                     items = favoriteRecipes,
-                    key = { recipe -> recipe.id } // <-- 1. Add key
+                    key = { recipe -> recipe.id }
                 ) { recipe ->
                     RecipeCard(
                         recipe = recipe,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .animateItemPlacement(), // <-- 2. Add animation
+                            .animateItemPlacement(),
                         onFavoriteToggle = { isFavorite ->
                             onFavoriteToggle(recipe, isFavorite)
                         },

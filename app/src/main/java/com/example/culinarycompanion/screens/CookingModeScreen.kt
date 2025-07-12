@@ -45,7 +45,6 @@ fun CookingModeScreen(
         }
     }
 
-    // The intent we want to launch also remains the same.
     val voiceIntent: Intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
         putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
         putExtra(RecognizerIntent.EXTRA_PROMPT, "Listening for a command...")
@@ -78,8 +77,7 @@ fun CookingModeScreen(
             )
         },
         floatingActionButton = {
-            // The FAB now acts as a manual backup. If the user misses the automatic
-            // prompt or it fails, they can tap this to try again.
+
             FloatingActionButton(
                 onClick = {
                     try {
@@ -94,7 +92,7 @@ fun CookingModeScreen(
             }
         }
     ) { padding ->
-        // The rest of the UI below does not need any changes.
+
         Column(
             modifier = Modifier
                 .padding(padding)

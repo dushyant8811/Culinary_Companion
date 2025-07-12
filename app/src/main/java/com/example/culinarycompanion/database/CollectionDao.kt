@@ -27,7 +27,6 @@ interface CollectionDao {
     @Query("SELECT * FROM recipecollection ORDER BY createdAt DESC")
     suspend fun getAllCollections(): List<RecipeCollection>
 
-    // This will work correctly since it operates on getAllCollections
     suspend fun getCollectionsContainingRecipe(recipeId: String): List<RecipeCollection> {
         return getAllCollections().filter { collection ->
             collection.recipeIds.contains(recipeId)

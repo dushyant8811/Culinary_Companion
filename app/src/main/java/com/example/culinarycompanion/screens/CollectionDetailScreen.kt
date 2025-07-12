@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -16,15 +17,15 @@ import androidx.navigation.NavController
 import com.example.culinarycompanion.components.RecipeCard
 import com.example.culinarycompanion.model.Recipe
 import com.example.culinarycompanion.model.RecipeCollection
+import com.example.culinarycompanion.viewmodel.AppViewModel
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun CollectionDetailScreen(
     navController: NavController,
+    viewModel: AppViewModel,
     collection: RecipeCollection,
-    recipes: List<Recipe>,  // This now contains ONLY the recipes in this collection
-    onRecipeClick: (Recipe) -> Unit,
-    onRemoveFromCollection: (Recipe) -> Unit
+    recipes: List<Recipe>
 ) {
     Scaffold(
         topBar = {
@@ -41,6 +42,7 @@ fun CollectionDetailScreen(
             )
         }
     ) { innerPadding ->
+
         if (recipes.isEmpty()) {
             Box(
                 modifier = Modifier
@@ -74,16 +76,25 @@ fun CollectionDetailScreen(
                     .padding(horizontal = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+
                 items(
                     items = recipes,
-                    key = { recipe -> recipe.id } // <-- 1. Add key
+                    key = { recipe -> recipe.id }
                 ) { recipe ->
+
                     RecipeCard(
                         recipe = recipe,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .animateItemPlacement(), // <-- 2. Add animation
-                        onClick = { onRecipeClick(recipe) }
+                            .animateItemPlacement(),
+                        // Call navController directly for navigation
+                        onClick = { navController.navigate("recipeDetail/${recipe.id}") },
+
+                        trailingIcon = {
+                            IconButton(onClick = { viewModel.removeFromCollection(recipe, collection.id) }) {
+                                Icon(Icons.Default.Close, contentDescription = "Remove from collection")
+                            }
+                        }
                     )
                 }
             }

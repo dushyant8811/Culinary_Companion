@@ -2,6 +2,7 @@ package com.example.culinarycompanion.repository
 
 import android.util.Log
 import com.example.culinarycompanion.model.Recipe
+import com.example.culinarycompanion.model.Review
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
@@ -12,4 +13,6 @@ interface RecipeRepository {
     suspend fun getAllRecipes(): List<Recipe>
     suspend fun getRecipeById(id: String): Recipe?
     suspend fun addRecipe(recipe: Recipe): String
+    suspend fun getReviewsForRecipe(recipeId: String): List<Review>
+    suspend fun submitReview(review: Review)
 }

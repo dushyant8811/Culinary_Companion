@@ -12,8 +12,8 @@ import com.example.culinarycompanion.model.RecipeCollection
 
 @Database(
     entities = [RecipeCollection::class, SavedRecipe::class],
-    version = 4,  // Incremented version for new changes
-    exportSchema = true  // Enable schema export for migrations
+    version = 4,
+    exportSchema = true
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
@@ -34,10 +34,10 @@ abstract class AppDatabase : RoomDatabase() {
                     .addCallback(object : RoomDatabase.Callback() {
                         override fun onCreate(db: SupportSQLiteDatabase) {
                             super.onCreate(db)
-                            // Initialize with default collections if needed
+
                         }
                     })
-                    .addMigrations(MIGRATION_3_4)  // Add your migration here
+                    .addMigrations(MIGRATION_3_4)
                     .fallbackToDestructiveMigrationOnDowngrade()
                     .build()
                 INSTANCE = instance
@@ -48,7 +48,7 @@ abstract class AppDatabase : RoomDatabase() {
         // Migration from version 3 to 4
         private val MIGRATION_3_4 = object : Migration(3, 4) {
             override fun migrate(database: SupportSQLiteDatabase) {
-                // Add any schema changes here
+
             }
         }
     }

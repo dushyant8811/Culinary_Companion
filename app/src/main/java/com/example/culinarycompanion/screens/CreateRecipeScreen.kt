@@ -35,6 +35,7 @@ fun CreateRecipeScreen(
     viewModel: AppViewModel
 ) {
     var title by remember { mutableStateOf("") }
+    var description by remember { mutableStateOf("") }
     val ingredients = remember { mutableStateListOf("") }
     val instructions = remember { mutableStateListOf("") }
     var prepTime by remember { mutableStateOf("") }
@@ -105,6 +106,7 @@ fun CreateRecipeScreen(
                     if (isFormValid) {
                         viewModel.createRecipe(
                             title = title,
+                            description = description,
                             ingredients = ingredients,
                             instructions = instructions,
                             prepTime = prepTime.toIntOrNull() ?: 0,
@@ -136,6 +138,16 @@ fun CreateRecipeScreen(
                     label = { Text("Recipe Title") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
+                )
+            }
+
+            item {
+                OutlinedTextField(
+                    value = description,
+                    onValueChange = { description = it },
+                    label = { Text("Description") },
+                    modifier = Modifier.fillMaxWidth().height(120.dp),
+                    singleLine = false
                 )
             }
 

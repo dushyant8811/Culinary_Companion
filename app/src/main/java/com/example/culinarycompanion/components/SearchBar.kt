@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.dp
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchBar(
-    value: TextFieldValue,  // Changed from MutableState<TextFieldValue>
+    value: TextFieldValue,
     onValueChange: (TextFieldValue) -> Unit,  // Added this parameter
     modifier: Modifier = Modifier
 ) {

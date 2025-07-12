@@ -68,7 +68,19 @@ data class Recipe(
 
     @get:PropertyName("author")
     @set:PropertyName("author")
-    var author: String = "Culinary Companion"
+    var author: String = "Culinary Companion",
+
+    @get:PropertyName("description")
+    @set:PropertyName("description")
+    var description: String = "",
+
+    @get:PropertyName("averageRating")
+    @set:PropertyName("averageRating")
+    var averageRating: Float = 0.0f,
+
+    @get:PropertyName("reviewCount")
+    @set:PropertyName("reviewCount")
+    var reviewCount: Int = 0
 
 ) {
     // Excluded from Firestore (computed property)
@@ -97,28 +109,37 @@ data class Recipe(
             "isFavorite" to isFavorite,
             "createdAt" to createdAt,
             "updatedAt" to updatedAt,
-            "author" to author
+            "author" to author,
+            "description" to description,
+            "averageRating" to averageRating,
+            "reviewCount" to reviewCount
         )
     }
 
     companion object {
         // Helper function to create from Firestore document
+        @Suppress("UNCHECKED_CAST")
         fun fromMap(map: Map<String, Any>): Recipe {
             return Recipe(
                 id = map["id"] as? String ?: "",
                 title = map["title"] as? String ?: "",
+                description = map["description"] as? String ?: "",
                 ingredients = map["ingredients"] as? List<String> ?: emptyList(),
                 instructions = map["instructions"] as? List<String> ?: emptyList(),
-                prepTime = (map["prepTime"] as? Long)?.toInt() ?: 0,
-                cookTime = (map["cookTime"] as? Long)?.toInt() ?: 0,
-                servings = (map["servings"] as? Long)?.toInt() ?: 1,
+
+                prepTime = (map["prepTime"] as? Number)?.toInt() ?: 0,
+                cookTime = (map["cookTime"] as? Number)?.toInt() ?: 0,
+                servings = (map["servings"] as? Number)?.toInt() ?: 1,
+                reviewCount = (map["reviewCount"] as? Number)?.toInt() ?: 0,
+                averageRating = (map["averageRating"] as? Number)?.toFloat() ?: 0.0f,
+
                 category = map["category"] as? String ?: RecipeCategory.ALL.name,
                 dietaryTags = map["dietaryTags"] as? List<String> ?: emptyList(),
                 imageUrl = map["imageUrl"] as? String,
                 isFavorite = map["isFavorite"] as? Boolean ?: false,
+                author = map.getOrDefault("author", "Culinary Companion") as String,
                 createdAt = map["createdAt"] as? Long ?: System.currentTimeMillis(),
-                updatedAt = map["updatedAt"] as? Long ?: System.currentTimeMillis(),
-                author = map["author"] as? String ?: "Culinary Companion"
+                updatedAt = map["updatedAt"] as? Long ?: System.currentTimeMillis()
             )
         }
     }

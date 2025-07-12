@@ -92,13 +92,13 @@ fun CollectionsScreen(
             ) {
                 items(
                     items = collections,
-                    key = { collection -> collection.id } // <-- 1. Add key
+                    key = { collection -> collection.id }
                 ) { collection ->
                     val recipeCount = allRecipes.count { it.id in collection.recipeIds }
                     CollectionItem(
                         collection = collection,
                         recipeCount = recipeCount,
-                        modifier = Modifier.animateItemPlacement(), // <-- 2. Add animation
+                        modifier = Modifier.animateItemPlacement(),
                         onCollectionClick = {
                             if (collection.id.isNotBlank()) {
                                 onCollectionClick(collection.id)
